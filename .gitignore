@@ -1,0 +1,11 @@
+.build/
+build/
+*.app
+.swiftpm/
+.DS_Store
+.env*
+!.env.example
+*.p8
+*.p12
+*.key
+*.pem
