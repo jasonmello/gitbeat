@@ -12,3 +12,5 @@
 - **2026-11-19 · Liquid Glass é o visual oficial; Clássico continua como opção e fallback antes do macOS 26.**
 - **2026-11-19 · Histórico permanente no Mac com cópia no iCloud Drive.** Só números, nunca texto. Um arquivo por mês por Mac evita conflito de sincronização. Escolhido no lugar de repositório no GitHub (geraria commits diários) e de serviço na nuvem (exigiria conta e servidor).
 - **2026-11-19 · Também lê OpenCode, Codex CLI e Gemini CLI.** Cursor e Antigravity ficam de fora: guardam uso só na conta online.
+- **2026-11-19 · Abrir no login ligado na primeira abertura; notificações de anéis e de sequência ligadas por padrão.** O app vive na barra de menu e o lembrete só funciona se ele estiver rodando; tudo pode ser desligado nos Ajustes.
+- **2026-11-19 · Notificações ficam no código, com aviso nos Ajustes e chama na barra de menu como alternativa.** Nesta máquina o macOS responde "Notifications are not allowed for this application" ao app assinado ad hoc, mesmo registrado no LaunchServices e aberto pelo `open`. A causa provável é a falta de assinatura Developer ID (não confirmada); deve sumir quando o app for assinado para distribuição.
