@@ -45,12 +45,19 @@ final class Preferences {
     var language: AppLanguage { didSet { UserDefaults.standard.set(language.rawValue, forKey: "language") } }
     var style: VisualStyle { didSet { UserDefaults.standard.set(style.rawValue, forKey: "style") } }
     var mode: ThemeMode { didSet { UserDefaults.standard.set(mode.rawValue, forKey: "mode") } }
+    var notifyRings: Bool { didSet { UserDefaults.standard.set(notifyRings, forKey: "notifyRings") } }
+    var notifyStreak: Bool { didSet { UserDefaults.standard.set(notifyStreak, forKey: "notifyStreak") } }
+    /// Hora do lembrete de sequência (0–23).
+    var reminderHour: Int { didSet { UserDefaults.standard.set(reminderHour, forKey: "reminderHour") } }
 
     init() {
         let d = UserDefaults.standard
         language = d.string(forKey: "language").flatMap(AppLanguage.init) ?? .en
         style = d.string(forKey: "style").flatMap(VisualStyle.init) ?? .glass
         mode = d.string(forKey: "mode").flatMap(ThemeMode.init) ?? .system
+        notifyRings = d.object(forKey: "notifyRings") as? Bool ?? true
+        notifyStreak = d.object(forKey: "notifyStreak") as? Bool ?? true
+        reminderHour = d.object(forKey: "reminderHour") as? Int ?? 21
     }
 
     /// Liquid Glass só existe a partir do macOS 26.

@@ -279,6 +279,30 @@ enum ArchiveTests {
     }
 }
 
+enum NotificationTests {
+    static func plans() {
+        let cal = saoPaulo.calendar
+        let morning = cal.date(bySettingHour: 10, minute: 0, second: 0, of: saoPaulo.date("2026-11-19")!)!
+        let night = cal.date(bySettingHour: 22, minute: 0, second: 0, of: saoPaulo.date("2026-11-19")!)!
+        func state(_ now: Date, rings: Bool = false, active: Bool = false, streak: Int = 5, last: String? = nil,
+                   notifyRings: Bool = true, notifyStreak: Bool = true) -> NotificationPlanner.State {
+            .init(now: now, todayKey: "2026-11-19", allRingsClosed: rings, todayActive: active, streak: streak,
+                  lastRingsNotifiedDay: last, notifyRings: notifyRings, notifyStreak: notifyStreak, reminderHour: 21)
+        }
+        // anéis fechados: avisa uma vez por dia
+        expect(NotificationPlanner.plan(state(morning, rings: true, active: true), calendar: cal).postRingsClosed)
+        expect(!NotificationPlanner.plan(state(morning, rings: true, active: true, last: "2026-11-19"), calendar: cal).postRingsClosed)
+        expect(!NotificationPlanner.plan(state(morning, rings: true, active: true, notifyRings: false), calendar: cal).postRingsClosed)
+        // sequência em risco: agenda para as 21h se hoje está vazio
+        let reminder = NotificationPlanner.plan(state(morning), calendar: cal).streakReminderAt
+        expect(reminder.map { cal.component(.hour, from: $0) } == 21)
+        expect(NotificationPlanner.plan(state(morning, active: true), calendar: cal).streakReminderAt == nil)   // já teve atividade
+        expect(NotificationPlanner.plan(state(morning, streak: 0), calendar: cal).streakReminderAt == nil)      // nada a perder
+        expect(NotificationPlanner.plan(state(night), calendar: cal).streakReminderAt == nil)                   // horário já passou
+        expect(NotificationPlanner.plan(state(morning, notifyStreak: false), calendar: cal).streakReminderAt == nil)
+    }
+}
+
 if CommandLine.arguments.contains("--real") {
     // Lê os arquivos de verdade e imprime os últimos 7 dias, para conferir com uma soma independente.
     let cache = FileManager.default.temporaryDirectory.appendingPathComponent("gitbeat-check-cache.json")
@@ -312,6 +336,7 @@ run("pricing") { try PricingTests.opusCost(); PricingTests.longestPrefixWins(); 
 run("stats") { StatsTests.dayKeyUsesLocalTimezone(); StatsTests.sessionTimeIgnoresLongGapsAndOverlap(); StatsTests.streaks(); StatsTests.periodBuckets() }
 run("other tools") { OtherToolTests.codexUsesCumulativeDeltas(); OtherToolTests.geminiKeepsLastLinePerID(); OtherToolTests.openCodeMessageShapes() }
 run("archive") { try ArchiveTests.oldRecordsDecodeAsClaudeCode(); ArchiveTests.eachMacWritesItsOwnFolder() }
+run("notifications") { NotificationTests.plans() }
 run("github") { try GitHubTests.parsesHistory(); try GitHubTests.parsesPRPage() }
 
 print(failures == 0 ? "OK: \(checks) checagens" : "\(failures) falha(s) em \(checks) checagens")

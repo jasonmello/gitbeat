@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import GitBeatCore
 
@@ -11,7 +12,7 @@ struct SettingsView: View {
                 .padding(.vertical, 8)
                 .tabItem { Label(T("Goals", "Metas"), systemImage: "target") }
         }
-        .frame(width: 460)
+        .frame(width: 480)
         .padding(20)
     }
 }
@@ -35,8 +36,90 @@ struct GeneralSettings: View {
                 ForEach(ThemeMode.allCases) { Text($0.title).tag($0) }
             }
             .pickerStyle(.segmented)
+
+            SwiftUI.Section(T("Startup", "Inicialização")) {
+                LoginItemRow()
+            }
+            SwiftUI.Section(T("Notifications", "Notificações")) {
+                NotificationRows()
+            }
             CreditLine().padding(.top, 6)
         }
         .formStyle(.grouped)
+    }
+}
+
+/// Abrir no login, refletindo o estado real do sistema (o usuário pode mudar em Ajustes do Sistema).
+struct LoginItemRow: View {
+    @ViewState private var status = LoginItem.status
+
+    var body: some View {
+        Toggle(T("Open GitBeat at login", "Abrir o GitBeat ao iniciar o Mac"), isOn: Binding(
+            get: { status == .enabled || status == .needsApproval },
+            set: { LoginItem.set($0); status = LoginItem.status }))
+            .disabled(status == .unavailable)
+            .onAppear { status = LoginItem.status }
+        switch status {
+        case .needsApproval:
+            HStack {
+                Text(T("macOS is waiting for your approval in Login Items.", "O macOS está esperando sua aprovação em Itens de Início."))
+                    .font(.caption).foregroundStyle(.secondary)
+                Spacer()
+                Button(T("Open Login Items", "Abrir Itens de Início")) { LoginItem.openSystemSettings() }
+                    .controlSize(.small)
+            }
+        case .unavailable:
+            Text(T("Available when GitBeat runs as an installed app.", "Disponível quando o GitBeat roda como app instalado."))
+                .font(.caption).foregroundStyle(.secondary)
+        default:
+            EmptyView()
+        }
+    }
+}
+
+struct NotificationRows: View {
+    @Environment(AppModel.self) private var model
+    @ViewState private var denied = false
+    @ViewState private var blocked = false
+
+    var body: some View {
+        @Bindable var prefs = Preferences.shared
+        Toggle(T("When I close all three rings", "Quando eu fechar os três anéis"), isOn: $prefs.notifyRings)
+        Toggle(T("Before my streak ends", "Antes de a sequência acabar"), isOn: $prefs.notifyStreak)
+        if prefs.notifyStreak {
+            Picker(T("Reminder time", "Horário do lembrete"), selection: $prefs.reminderHour) {
+                ForEach(17...23, id: \.self) { h in
+                    Text(Calendar.current.date(bySettingHour: h, minute: 0, second: 0, of: Date())
+                        .map { $0.formatted(.dateTime.hour().minute().locale(Fmt.locale)) } ?? "\(h)h").tag(h)
+                }
+            }
+        }
+        if blocked {
+            Label(T("macOS isn't letting this copy of GitBeat send notifications. This usually happens with apps signed only on this Mac, and goes away once GitBeat is signed with an Apple Developer ID. Meanwhile, the menu bar icon turns into a flame when your streak is at risk.",
+                    "O macOS não está deixando esta cópia do GitBeat mandar notificações. Isso costuma acontecer com apps assinados só neste Mac, e some quando o GitBeat for assinado com um Apple Developer ID. Enquanto isso, o ícone da barra de menu vira uma chama quando a sequência está em risco."),
+                  systemImage: "exclamationmark.triangle")
+                .font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        } else if denied {
+            HStack {
+                Text(T("Notifications for GitBeat are off in System Settings.", "As notificações do GitBeat estão desligadas nos Ajustes do Sistema."))
+                    .font(.caption).foregroundStyle(.secondary)
+                Spacer()
+                Button(T("Open Notifications", "Abrir Notificações")) {
+                    if let url = URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+                .controlSize(.small)
+            }
+        }
+        EmptyView()
+            .task(id: "\(prefs.notifyRings)\(prefs.notifyStreak)\(prefs.reminderHour)") {
+                if prefs.notifyRings || prefs.notifyStreak {
+                    if case .blockedBySystem = await Notifier.shared.requestPermissionResult() { blocked = true }
+                }
+                denied = await Notifier.shared.authorizationStatus() == .denied
+                Notifier.shared.update(with: model)
+            }
     }
 }
