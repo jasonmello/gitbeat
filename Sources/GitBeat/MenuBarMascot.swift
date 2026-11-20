@@ -37,6 +37,9 @@ final class MenuBarMascot {
     /// Kit v3 (brand/mascot/menu-bar/animation-manifest.json): 12 quadros por segundo.
     static let fps: Double = 12
     static let frameCounts: [(ActivityMeter.Level, Int)] = [(.idle, 96), (.flowing, 72), (.busy, 36), (.burst, 36)]
+    /// Parado, o mascote fica quieto e só faz o ciclo de olhar e piscar (8 s) a cada 45 s.
+    /// Cada troca de quadro faz o macOS redesenhar o ícone; assim o estado parado acorda ~80% menos.
+    static let idleRest: TimeInterval = 37
 
     init() {
         meter = ActivityMeter(configuration: Self.configuration)
@@ -97,18 +100,19 @@ final class MenuBarMascot {
             setImage(runs[0].image)   // Reduzir movimento: pose parada, contador continua.
         } else {
             let cycle = runs.reduce(0) { $0 + $1.frames }
-            var position = Int(date.timeIntervalSince(phaseStart) * Self.fps) % cycle
-            var index = 0
-            while position >= runs[index].frames { position -= runs[index].frames; index += 1 }
-            setImage(runs[index].image)
-            if runs.count > 1 {
-                let wait = Double(runs[index].frames - position) / Self.fps
-                let t = Timer(timeInterval: wait, repeats: false) { [weak self] _ in
-                    Task { @MainActor in self?.show() }
-                }
-                t.tolerance = 0.02
-                RunLoop.main.add(t, forMode: .common)
-                timer = t
+            let cycleSeconds = Double(cycle) / Self.fps
+            let rest = current == .idle ? Self.idleRest : 0
+            let elapsed = date.timeIntervalSince(phaseStart).truncatingRemainder(dividingBy: cycleSeconds + rest)
+            if elapsed >= cycleSeconds {
+                // Descanso entre um ciclo e outro: pose parada, um único timer até o próximo ciclo.
+                setImage(runs[0].image)
+                schedule(after: cycleSeconds + rest - elapsed, tolerance: 1)
+            } else {
+                var position = min(Int(elapsed * Self.fps), cycle - 1)
+                var index = 0
+                while position >= runs[index].frames { position -= runs[index].frames; index += 1 }
+                setImage(runs[index].image)
+                if runs.count > 1 { schedule(after: Double(runs[index].frames - position) / Self.fps, tolerance: 0.02) }
             }
         }
         // Com atividade, confere a cada 5 s se ela já expirou (para voltar a ficar quieto).
@@ -123,6 +127,15 @@ final class MenuBarMascot {
             housekeeping?.invalidate()
             housekeeping = nil
         }
+    }
+
+    private func schedule(after wait: TimeInterval, tolerance: TimeInterval) {
+        let t = Timer(timeInterval: max(wait, 0.01), repeats: false) { [weak self] _ in
+            Task { @MainActor in self?.show() }
+        }
+        t.tolerance = tolerance
+        RunLoop.main.add(t, forMode: .common)
+        timer = t
     }
 
     private func setImage(_ next: NSImage) {

@@ -16,6 +16,25 @@ public struct DayKeys: Sendable {
     }
 
     public func key(_ date: Date) -> String { formatter.string(from: date) }
+
+    /// As chaves de muitas datas de uma vez. Formatar data é caro; aqui só formata quando a data
+    /// sai do dia anterior, então uma lista em ordem de tempo custa uma formatação por dia, não por item.
+    public func keys(_ dates: [Date]) -> [String] {
+        var out: [String] = []
+        out.reserveCapacity(dates.count)
+        var window: DateInterval?
+        var current = ""
+        for d in dates {
+            if let w = window, d >= w.start, d < w.end {
+                out.append(current)
+                continue
+            }
+            current = key(d)
+            window = calendar.dateInterval(of: .day, for: d)
+            out.append(current)
+        }
+        return out
+    }
     public func date(_ key: String) -> Date? { formatter.date(from: key) }
     public func startOfDay(_ date: Date) -> Date { calendar.startOfDay(for: date) }
 
@@ -60,9 +79,11 @@ public struct TokenTotals: Equatable, Sendable {
 }
 
 public enum Stats {
-    public static func tokensByDay(_ records: [UsageRecord], days: DayKeys) -> [String: TokenTotals] {
+    /// `keys`: as chaves de dia já calculadas (`DayKeys.keys`), na mesma ordem de `records`.
+    public static func tokensByDay(_ records: [UsageRecord], days: DayKeys, keys: [String]? = nil) -> [String: TokenTotals] {
+        let keys = keys ?? days.keys(records.map(\.timestamp))
         var out: [String: TokenTotals] = [:]
-        for r in records { out[days.key(r.timestamp), default: TokenTotals()].add(r) }
+        for (r, k) in zip(records, keys) { out[k, default: TokenTotals()].add(r) }
         return out
     }
 
@@ -90,10 +111,11 @@ public enum SessionTime {
     public static func activeSecondsByDay(_ timestamps: [Date], days: DayKeys,
                                           maxGap: TimeInterval = defaultGap) -> [String: Double] {
         let sorted = timestamps.sorted()
+        let keys = days.keys(sorted)
         var out: [String: Double] = [:]
-        for (a, b) in zip(sorted, sorted.dropFirst()) {
-            let gap = b.timeIntervalSince(a)
-            if gap > 0, gap <= maxGap { out[days.key(a), default: 0] += gap }
+        for i in sorted.indices.dropLast() {
+            let gap = sorted[i + 1].timeIntervalSince(sorted[i])
+            if gap > 0, gap <= maxGap { out[keys[i], default: 0] += gap }
         }
         return out
     }
@@ -200,10 +222,11 @@ public enum Period: String, CaseIterable, Identifiable, Sendable {
 
 extension Stats {
     /// Totais por dia e por uma chave (projeto, modelo). Calculado uma vez, somado depois para qualquer período.
-    public static func tokensByDay(_ records: [UsageRecord], days: DayKeys,
+    public static func tokensByDay(_ records: [UsageRecord], days: DayKeys, keys: [String]? = nil,
                                    groupedBy key: (UsageRecord) -> String) -> [String: [String: TokenTotals]] {
+        let keys = keys ?? days.keys(records.map(\.timestamp))
         var out: [String: [String: TokenTotals]] = [:]
-        for r in records { out[days.key(r.timestamp), default: [:]][key(r), default: TokenTotals()].add(r) }
+        for (r, k) in zip(records, keys) { out[k, default: [:]][key(r), default: TokenTotals()].add(r) }
         return out
     }
 

@@ -8,7 +8,7 @@ App de Mac para quem programa com IA, com anéis de meta e sequências: tokens p
 - `site/`: página de apresentação (um `site/index.html` só, sem dependências; imagens em `site/assets/`). `brand/mascot/`: kit do mascote (SVGs, manifestos, guias). `Resources/`: arquivos que vão para dentro do `.app` (ícone, logos, quadros das animações). `archive/`: site e logo antigos guardados. `Tests/GitBeatChecks/main.swift`: checagens. `scripts/`: build e conferência de docs.
 
 ## Comandos
-- Checagens: `swift run GitBeatChecks` · com os dados reais: `swift run -c release GitBeatChecks --real`
+- Checagens: `swift run GitBeatChecks` · com os dados reais: `swift run -c release GitBeatChecks --real` · tempo de cada etapa da leitura: `swift run -c release GitBeatChecks --bench`
 - Rodar: `swift run GitBeat` · Montar o app: `scripts/build-app.sh` (`--install` copia para /Applications; `--notarize` assina com Developer ID e notariza)
 - Capturas de todas as telas (en/pt, glass/clássico, claro/escuro): `.build/release/GitBeat --snapshot <pasta>`
 - Docs: `scripts/check-docs.sh` · Site local: configuração `site` em `.claude/launch.json` (porta 8787)

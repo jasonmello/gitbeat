@@ -44,10 +44,13 @@ public final class HistoryArchive: @unchecked Sendable {
     }
 
     /// Registros guardados: os deste Mac e os dos outros Macs (local e iCloud).
+    /// Os meses deste Mac vêm da cópia local; a do iCloud só entra para um mês que falta no local
+    /// (antes eram lidas as duas e metade era descartada como repetida).
     public func load() -> (own: [UsageRecord], others: [UsageRecord]) {
         lock.lock(); defer { lock.unlock() }
         var own: [UsageRecord] = []
         var others: [UsageRecord] = []
+        var ownMonthsLocal = Set<String>()
         for base in [localDir, cloudDir].compactMap({ $0 }) {
             let machines = (try? FileManager.default.contentsOfDirectory(at: base, includingPropertiesForKeys: nil)) ?? []
             for dir in machines where dir.hasDirectoryPath {
@@ -57,11 +60,14 @@ public final class HistoryArchive: @unchecked Sendable {
                         try? FileManager.default.startDownloadingUbiquitousItem(at: file)
                         continue
                     }
+                    let isOwn = dir.lastPathComponent == machine.id
+                    if isOwn, base != localDir, ownMonthsLocal.contains(file.deletingPathExtension().lastPathComponent) { continue }
                     guard file.pathExtension == "json", let data = try? Data(contentsOf: file),
                           let month = try? JSONDecoder().decode(MonthFile.self, from: data) else { continue }
-                    if dir.lastPathComponent == machine.id {
+                    if isOwn {
                         own += month.records
                         if base == localDir {
+                            ownMonthsLocal.insert(month.month)
                             written[month.month] = max(written[month.month] ?? 0, month.records.count)
                         }
                     } else {
