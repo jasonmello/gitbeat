@@ -18,21 +18,10 @@ struct SummaryView: View {
             HStack(alignment: .top, spacing: Theme.gap) {
                 Card(title: T("Today's rings", "Anéis de hoje"), systemImage: "circle.circle", tint: .red,
                      action: { selection = .goals }) {
-                    HStack(spacing: 28) {
-                        ActivityRings(values: [
-                            .init(progress: rings.tokens, color: Theme.tokens),
-                            .init(progress: rings.hours, color: Theme.time),
-                            .init(progress: rings.commits, color: Theme.github),
-                        ], size: 150)
-                        VStack(alignment: .leading, spacing: 10) {
-                            RingLegend(title: T("Tokens", "Tokens"), value: Fmt.tokens(tokens.total),
-                                       goal: Fmt.tokens(model.goals.tokens), color: Theme.tokens)
-                            RingLegend(title: T("Time", "Tempo"), value: Fmt.shortHours(model.hours(on: today)),
-                                       goal: Fmt.shortHours(model.goals.hours), color: Theme.time)
-                            RingLegend(title: "Commits", value: Fmt.int(model.commits(on: today)),
-                                       goal: Fmt.int(model.goals.commits), color: Theme.github)
-                        }
-                        Spacer(minLength: 0)
+                    // A semana em anéis aparece quando cabe; em janela estreita, só hoje.
+                    ViewThatFits(in: .horizontal) {
+                        todayRings(rings, tokens, today: today, week: week)
+                        todayRings(rings, tokens, today: today, week: nil)
                     }
                 }
 
@@ -41,6 +30,7 @@ struct SummaryView: View {
                     BigValue(value: Fmt.int(model.currentStreak), unit: Fmt.days(model.currentStreak))
                     Text(T("in a row coding with AI or committing", "seguidos programando com IA ou fazendo commits"))
                         .font(.callout).foregroundStyle(.secondary)
+                    StreakWeek(days: week).padding(.vertical, 4)
                     Divider()
                     Text(T("Record: ", "Recorde: ") + "\(Fmt.int(model.longestStreak)) \(Fmt.days(model.longestStreak))")
                         .font(.callout.weight(.medium))
@@ -84,6 +74,28 @@ struct SummaryView: View {
         }
     }
 
+    /// Anéis de hoje com a legenda; com `week`, a semana em anéis pequenos à direita.
+    private func todayRings(_ rings: AppModel.RingValues, _ tokens: TokenTotals,
+                            today: String, week: [String]?) -> some View {
+        HStack(alignment: .center, spacing: 24) {
+            ActivityRings(values: [
+                .init(progress: rings.tokens, color: Theme.tokens),
+                .init(progress: rings.hours, color: Theme.time),
+                .init(progress: rings.commits, color: Theme.github),
+            ], size: 150)
+            VStack(alignment: .leading, spacing: 12) {
+                RingLegend(title: T("Tokens", "Tokens"), value: Fmt.tokens(tokens.total),
+                           goal: Fmt.tokens(model.goals.tokens), color: Theme.tokens)
+                RingLegend(title: T("Time", "Tempo"), value: Fmt.shortHours(model.hours(on: today)),
+                           goal: Fmt.shortHours(model.goals.hours), color: Theme.time)
+                RingLegend(title: "Commits", value: Fmt.int(model.commits(on: today)),
+                           goal: Fmt.int(model.goals.commits), color: Theme.github)
+            }
+            Spacer(minLength: 16)
+            if let week { WeekRings(days: week).fixedSize() }
+        }
+    }
+
     private func summaryCard(_ section: Section, value: String, unit: String?,
                              detail: String, points: [AppModel.Point]) -> some View {
         Card(title: section.title, systemImage: section.systemImage, tint: section.tint, trailing: T("Today", "Hoje"),
@@ -95,6 +107,85 @@ struct SummaryView: View {
     }
 }
 
+/// Os anéis de cada um dos últimos 7 dias, pequenos, com a letra do dia embaixo.
+/// Mostra o ritmo da semana sem sair do cartão de hoje.
+struct WeekRings: View {
+    @Environment(AppModel.self) private var model
+    var days: [String]
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 10) {
+            Text(T("Last 7 days", "Últimos 7 dias")).eyebrow().foregroundStyle(.secondary)
+            HStack(spacing: 7) {
+                ForEach(days, id: \.self) { day in
+                    let r = model.rings(on: day)
+                    let isToday = day == model.todayKey
+                    VStack(spacing: 6) {
+                        ActivityRings(values: [
+                            .init(progress: r.tokens, color: Theme.tokens),
+                            .init(progress: r.hours, color: Theme.time),
+                            .init(progress: r.commits, color: Theme.github),
+                        ], size: 30)
+                        Text(letter(day))
+                            .font(.caption2.weight(isToday ? .bold : .medium))
+                            .foregroundStyle(isToday ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
+                            .fixedSize()
+                    }
+                }
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(T("Rings for the last 7 days", "Anéis dos últimos 7 dias"))
+    }
+
+    private func letter(_ day: String) -> String {
+        guard let date = model.days.date(day) else { return "" }
+        return date.formatted(.dateTime.weekday(.narrow).locale(Fmt.locale))
+    }
+}
+
+/// Os últimos 7 dias como bolinhas: cheia com atividade, vazia sem. Hoje sem atividade
+/// aparece tracejado (o dia ainda pode contar).
+struct StreakWeek: View {
+    @Environment(AppModel.self) private var model
+    var days: [String]
+
+    var body: some View {
+        let active = model.activeDays
+        HStack(spacing: 0) {
+            ForEach(days, id: \.self) { day in
+                let on = active.contains(day)
+                let isToday = day == model.todayKey
+                VStack(spacing: 5) {
+                    ZStack {
+                        if on {
+                            Circle().fill(Theme.streak.gradient)
+                            Image(systemName: "checkmark").font(.system(size: 9, weight: .heavy)).foregroundStyle(.white)
+                        } else if isToday {
+                            Circle().strokeBorder(Theme.streak, style: StrokeStyle(lineWidth: 1.5, dash: [3, 2.5]))
+                        } else {
+                            Circle().fill(Theme.well)
+                        }
+                    }
+                    .frame(width: 20, height: 20)
+                    Text(letter(day))
+                        .font(.caption2.weight(isToday ? .bold : .medium))
+                        .foregroundStyle(isToday ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
+                        .fixedSize()
+                }
+                .frame(maxWidth: .infinity)
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(T("Active days this week: ", "Dias ativos na semana: ") + "\(days.filter(active.contains).count)/\(days.count)")
+    }
+
+    private func letter(_ day: String) -> String {
+        guard let date = model.days.date(day) else { return "" }
+        return date.formatted(.dateTime.weekday(.narrow).locale(Fmt.locale))
+    }
+}
+
 /// Barrinhas dos últimos 7 dias, sem eixo, para os cartões do resumo.
 struct MiniBars: View {
     var points: [AppModel.Point]
@@ -103,15 +194,16 @@ struct MiniBars: View {
     var body: some View {
         Chart(points) { p in
             BarMark(x: .value("Day", p.date, unit: .day), y: .value("Value", p.value))
-                .foregroundStyle(Calendar.current.isDateInToday(p.date) ? AnyShapeStyle(tint.gradient) : AnyShapeStyle(tint.opacity(0.32)))
-                .cornerRadius(2)
+                .foregroundStyle(Calendar.current.isDateInToday(p.date) ? AnyShapeStyle(tint.gradient) : AnyShapeStyle(tint.opacity(0.45)))
+                .cornerRadius(4)
         }
         .chartYAxis(.hidden)
         .chartXAxis {
             AxisMarks(values: .stride(by: .day)) { _ in
                 AxisValueLabel(format: .dateTime.weekday(.narrow).locale(Fmt.locale), centered: true)
+                    .foregroundStyle(.secondary)
             }
         }
-        .frame(height: 56)
+        .frame(height: 60)
     }
 }
