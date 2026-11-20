@@ -1,3 +1,4 @@
+import AppKit
 import CryptoKit
 import Foundation
 import IOKit
@@ -52,9 +53,16 @@ final class AppModel {
     private let githubClient = GitHubClient()
     private let githubCacheURL: URL
     private var timer: Timer?
+    private var wakeObserver: NSObjectProtocol?
     private let notifies: Bool
     private static let goalsKey = "goals"
-    private static let githubMaxAge: TimeInterval = 30 * 60
+    /// De quanto em quanto tempo o app relê as ferramentas sozinho. A leitura é incremental
+    /// (só arquivos que mudaram) e leva menos de 1 s, então dá para ser frequente.
+    static let autoRefreshInterval: TimeInterval = 2 * 60
+    /// Idade máxima dos dados do GitHub antes de consultar de novo (2 consultas ao `gh` por vez).
+    private static let githubMaxAge: TimeInterval = 10 * 60
+    /// Ao abrir a janela ou o painel da barra de menu, atualiza se os dados forem mais velhos que isto.
+    private static let staleOnOpen: TimeInterval = 60
 
     static var supportDir: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -95,9 +103,24 @@ final class AppModel {
         notifies = autoRefresh
         guard autoRefresh else { return }
         Task { await refresh() }
-        timer = Timer.scheduledTimer(withTimeInterval: 10 * 60, repeats: true) { [weak self] _ in
+        let timer = Timer(timeInterval: Self.autoRefreshInterval, repeats: true) { [weak self] _ in
             Task { @MainActor in await self?.refresh() }
         }
+        timer.tolerance = 15   // deixa o macOS agrupar o disparo com outros e poupar bateria
+        RunLoop.main.add(timer, forMode: .common)   // .common: dispara mesmo com um menu aberto
+        self.timer = timer
+        // O timer não conta o tempo dormindo: ao acordar, atualiza na hora (o GitHub também).
+        wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in await self?.refresh(forceGitHub: true) }
+        }
+    }
+
+    /// Chamado quando a janela ou o painel da barra de menu aparecem.
+    func refreshIfStale() {
+        if let lastUpdated, Date().timeIntervalSince(lastUpdated) < Self.staleOnOpen { return }
+        Task { await refresh() }
     }
 
     /// O app se chamava Saúde Dev: aproveita o cache antigo para não reler tudo.

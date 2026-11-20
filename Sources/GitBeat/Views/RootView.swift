@@ -88,6 +88,11 @@ struct RootView: View {
                 RefreshButton()
             }
         }
+        // Voltar para o app (ou abrir a janela) atualiza se os dados tiverem mais de 1 min.
+        .onAppear { model.refreshIfStale() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            model.refreshIfStale()
+        }
     }
 
     private func row(_ section: Section) -> some View {
