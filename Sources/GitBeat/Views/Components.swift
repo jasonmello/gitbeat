@@ -2,7 +2,7 @@ import Charts
 import SwiftUI
 import GitBeatCore
 
-/// Cartão no estilo do app Saúde: título colorido com ícone, conteúdo embaixo.
+/// Cartão: título colorido com ícone, conteúdo embaixo.
 /// Com `action`, vira botão: sobe no hover, encolhe ao clicar, aceita foco do teclado.
 struct Card<Content: View>: View {
     var title: String

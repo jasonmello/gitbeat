@@ -106,7 +106,7 @@ public enum SessionTime {
     }
 }
 
-/// Metas diárias, como os anéis do app Saúde.
+/// Metas diárias, desenhadas como anéis.
 public struct Goals: Codable, Equatable, Sendable {
     public var tokens: Int
     public var hours: Double
@@ -156,7 +156,7 @@ public enum Streaks {
     }
 }
 
-/// Faixas de tempo dos gráficos, como no app Saúde: semana e mês por dia, 6 meses por semana, ano por mês.
+/// Faixas de tempo dos gráficos: semana e mês por dia, 6 meses por semana, ano por mês.
 public enum Period: String, CaseIterable, Identifiable, Sendable {
     case week = "S", month = "M", sixMonths = "6M", year = "A"
     public var id: String { rawValue }

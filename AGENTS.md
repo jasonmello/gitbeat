@@ -1,6 +1,6 @@
 # GitBeat
 
-App de Mac no estilo do app Saúde do iPhone para quem programa com IA: tokens por dia (Claude Code, OpenCode, Codex CLI, Gemini CLI), tempo ativo, commits e PRs do GitHub, anéis de meta e sequências. Nativo (SwiftUI + Swift Charts), janela + barra de menu, Liquid Glass. Inglês é o idioma original; português é opção. Tudo local, com cópia do histórico no iCloud Drive.
+App de Mac para quem programa com IA, com anéis de meta e sequências: tokens por dia (Claude Code, OpenCode, Codex CLI, Gemini CLI), tempo ativo, commits e PRs do GitHub, anéis de meta e sequências. Nativo (SwiftUI + Swift Charts), janela + barra de menu, Liquid Glass. Inglês é o idioma original; português é opção. Tudo local, com cópia do histórico no iCloud Drive.
 
 ## Onde está cada coisa
 - `Sources/GitBeatCore/`: lógica sem interface. `UsageStore.swift` (Claude Code), `OtherTools.swift` (OpenCode, Codex, Gemini), `HistoryArchive.swift` (histórico permanente), `Stats.swift`, `Pricing.swift`, `GitHub.swift`.

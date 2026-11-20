@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GitBeat — Find your coding rhythm</title>
-<meta name="description" content="GitBeat is Apple Health for coding with AI: tokens, active time, GitHub commits, goal rings and streaks, in a native Mac app.">
+<meta name="description" content="GitBeat turns your AI coding sessions and GitHub activity into goal rings, streaks and charts, in a native Mac app.">
 <meta name="theme-color" content="#0a0d0c">
 <link rel="icon" href="assets/gitbeat-logo.svg">
 <script>
@@ -292,7 +292,7 @@ footer b{color:var(--text);font-weight:600}
         <defs><linearGradient id="fade" x1="0" x2="1"><stop offset="0" stop-color="#00c995" stop-opacity="0"/><stop offset=".35" stop-color="#00c995"/><stop offset=".65" stop-color="#00c995"/><stop offset="1" stop-color="#00c995" stop-opacity="0"/></linearGradient></defs>
         <path class="fade" d="M0 34H220L232 40L252 6L274 56L290 34H560"/>
       </svg>
-      <p class="eyebrow" data-i18n="heroEyebrow">Apple Health, for coding with AI</p>
+      <p class="eyebrow" data-i18n="heroEyebrow">Your coding rhythm, at a glance</p>
       <h1 data-i18n-html="heroTitle">Every commit. Every token. <em>Your rhythm.</em></h1>
       <p class="intro" data-i18n="heroIntro">GitBeat turns your AI coding sessions and GitHub activity into rings, streaks and charts — in a native Mac app that lives in your menu bar.</p>
       <div class="actions">
@@ -320,7 +320,7 @@ footer b{color:var(--text);font-weight:600}
       <div class="reveal">
         <p class="eyebrow" data-i18n="ringsEyebrow">A familiar way to see your day</p>
         <h2 data-i18n-html="ringsTitle">Your activity.<br>Full circle.</h2>
-        <p class="lead" data-i18n="ringsLead">Three rings, like the ones on your wrist. Set a daily goal for tokens, hours and commits, and watch the day fill up.</p>
+        <p class="lead" data-i18n="ringsLead">Three rings, one for each daily goal. Set a target for tokens, hours and commits, and watch the day fill up.</p>
         <div class="facts">
           <div class="fact"><i class="dot" style="--c:var(--pink)"></i><p class="muted" style="margin:0" data-i18n-html="ringsF1"><b>Tokens</b> from every AI coding tool you use, counted once.</p></div>
           <div class="fact"><i class="dot" style="--c:var(--cyan)"></i><p class="muted" style="margin:0" data-i18n-html="ringsF2"><b>Time</b> actually spent coding with AI — breaks don't count.</p></div>
@@ -452,12 +452,12 @@ footer b{color:var(--text);font-weight:600}
       <div class="head reveal">
         <p class="eyebrow" data-i18n="instEyebrow">Install</p>
         <h2 data-i18n="instTitle">Up and running in a few minutes.</h2>
-        <p class="lead" data-i18n="instLead">No Xcode needed. GitBeat builds with Apple's free Command Line Tools.</p>
+        <p class="lead" data-i18n="instLead">No Xcode needed. GitBeat builds with the free Command Line Tools.</p>
       </div>
       <div class="install reveal">
         <div class="panel">
           <ol class="steps">
-            <li><div><b data-i18n="s1t">Install Apple's Command Line Tools</b><p data-i18n="s1d">Skip this if you already have them.</p><div class="code"><code>xcode-select --install</code><button class="chip-btn copy" type="button" data-copy="xcode-select --install" data-i18n="copy">Copy</button></div></div></li>
+            <li><div><b data-i18n="s1t">Install the Command Line Tools</b><p data-i18n="s1d">Skip this if you already have them.</p><div class="code"><code>xcode-select --install</code><button class="chip-btn copy" type="button" data-copy="xcode-select --install" data-i18n="copy">Copy</button></div></div></li>
             <li><div><b data-i18n="s0t">Get the code</b><p data-i18n="s0d">Clone the repository and open its folder.</p><div class="code"><code>git clone https://github.com/jasonmello/gitbeat.git &amp;&amp; cd gitbeat</code><button class="chip-btn copy" type="button" data-copy="git clone https://github.com/jasonmello/gitbeat.git &amp;&amp; cd gitbeat" data-i18n="copy">Copy</button></div></div></li>
             <li><div><b data-i18n="s2t">Build and install GitBeat</b><p data-i18n="s2d">The first build takes a couple of minutes. The app lands in your Applications folder.</p><div class="code"><code>scripts/build-app.sh --install</code><button class="chip-btn copy" type="button" data-copy="scripts/build-app.sh --install" data-i18n="copy">Copy</button></div></div></li>
             <li><div><b data-i18n="s3t">Connect GitHub (optional)</b><p data-i18n="s3d">For commits and pull requests.</p><div class="code"><code>gh auth login</code><button class="chip-btn copy" type="button" data-copy="gh auth login" data-i18n="copy">Copy</button></div></div></li>
@@ -480,7 +480,7 @@ footer b{color:var(--text);font-weight:600}
     <div class="wrap">
       <div class="head center reveal"><p class="eyebrow" data-i18n="faqEyebrow">Questions</p><h2 data-i18n="faqTitle">Good to know.</h2></div>
       <div class="faq reveal">
-        <details><summary data-i18n="q1">Do I need Xcode?</summary><p data-i18n="a1">No — not to use GitBeat, and not even to build it. It builds with Apple's free Command Line Tools. Xcode only helps if you want to change the code with previews and a debugger.</p></details>
+        <details><summary data-i18n="q1">Do I need Xcode?</summary><p data-i18n="a1">No — not to use GitBeat, and not even to build it. It builds with the free Command Line Tools. Xcode only helps if you want to change the code with previews and a debugger.</p></details>
         <details><summary data-i18n="q2">Why does GitBeat show more commits than my GitHub profile?</summary><p data-i18n="a2">Your profile calendar only counts private repositories when “Include private contributions on my profile” is on. GitBeat reads each repository's history directly, so private work counts either way.</p></details>
         <details><summary data-i18n="q3">Is the cost what I actually pay?</summary><p data-i18n="a3">No. It's what the same usage would cost at Anthropic's API list prices — a sense of scale. On a Pro or Max subscription you don't pay per token. OpenCode records its own cost; Codex and Gemini CLI don't, so they count as zero.</p></details>
         <details><summary data-i18n="q4">What happens to my history when Claude Code deletes old chats?</summary><p data-i18n="a4">Nothing is lost. GitBeat keeps the numbers in its own history, one file per month per Mac, on your Mac and in iCloud Drive. Open it on another Mac with the same iCloud account and you see both.</p></details>
@@ -514,7 +514,7 @@ footer b{color:var(--text);font-weight:600}
   // ===== Textos em português (o HTML já traz o inglês, que é o original) =====
   var PT = {
     skip:"Pular para o conteúdo", navFeatures:"Recursos", navPrivacy:"Privacidade", navInstall:"Instalar",
-    heroEyebrow:"O app Saúde, para quem programa com IA",
+    heroEyebrow:"O seu ritmo de programação, num relance",
     heroTitle:"Cada commit. Cada token. <em>O seu ritmo.</em>",
     heroIntro:"O GitBeat transforma suas sessões com IA e sua atividade no GitHub em anéis, sequências e gráficos — num app nativo de Mac que fica na barra de menu.",
     ctaGet:"Baixar o GitBeat", ctaGithub:"Ver no GitHub",
@@ -523,7 +523,7 @@ footer b{color:var(--text);font-weight:600}
     m1:"Tokens de IA", m1d:"Por ferramenta, projeto e modelo.", m2:"Tempo ativo", m2d:"Horas e horários de pico.",
     m3:"Atividade no GitHub", m3d:"Commits e pull requests.", m4:"Metas e sequências", m4d:"Feche seus anéis todo dia.",
     ringsEyebrow:"Um jeito familiar de ver o seu dia", ringsTitle:"Sua atividade.<br>Em círculo.",
-    ringsLead:"Três anéis, como os do seu pulso. Defina uma meta diária de tokens, horas e commits e veja o dia se completar.",
+    ringsLead:"Três anéis, um para cada meta do dia. Defina um alvo de tokens, horas e commits e veja o dia se completar.",
     ringsF1:"<b>Tokens</b> de todas as ferramentas de IA que você usa, contados uma vez só.",
     ringsF2:"<b>Tempo</b> programando com IA de verdade — pausas não contam.",
     ringsF3:"<b>Commits</b> que chegaram aos branches principais, repositórios privados inclusive.",
@@ -558,8 +558,8 @@ footer b{color:var(--text);font-weight:600}
     p1t:"Números, nunca palavras", p1d:"Só são lidos horário, pasta do projeto, modelo e quantidade de tokens. O texto das conversas nunca é guardado nem enviado a lugar nenhum.",
     p2t:"Um histórico que dura", p2d:"O Claude Code apaga conversas depois de 30 dias. O GitBeat guarda uma cópia permanente dos números no seu Mac e no seu próprio iCloud Drive.",
     p3t:"Nenhuma chave para entregar", p3d:"Os dados do GitHub vêm pelo GitHub CLI em que você já está logado. O GitBeat nunca pede nem guarda senha ou chave de API.",
-    instEyebrow:"Instalar", instTitle:"Funcionando em poucos minutos.", instLead:"Não precisa do Xcode. O GitBeat compila com as Command Line Tools, gratuitas, da Apple.",
-    s1t:"Instale as Command Line Tools da Apple", s1d:"Pule se você já tem.",
+    instEyebrow:"Instalar", instTitle:"Funcionando em poucos minutos.", instLead:"Não precisa do Xcode. O GitBeat compila com as Command Line Tools, que são gratuitas.",
+    s1t:"Instale as Command Line Tools", s1d:"Pule se você já tem.",
     s0t:"Baixe o código", s0d:"Clone o repositório e entre na pasta.",
     s2t:"Compile e instale o GitBeat", s2d:"A primeira compilação leva uns dois minutos. O app vai para a sua pasta Aplicativos.",
     s3t:"Conecte o GitHub (opcional)", s3d:"Para commits e pull requests.", copy:"Copiar",
@@ -568,7 +568,7 @@ footer b{color:var(--text);font-weight:600}
     r3:"<b>GitHub CLI</b> logado, para os anéis do GitHub.",
     r4:"<b>iCloud Drive</b> ligado, se quiser o histórico em todos os seus Macs.",
     faqEyebrow:"Perguntas", faqTitle:"Bom saber.",
-    q1:"Preciso do Xcode?", a1:"Não — nem para usar o GitBeat, nem para compilar. Ele compila com as Command Line Tools, gratuitas, da Apple. O Xcode só ajuda se você quiser mexer no código com preview e depurador.",
+    q1:"Preciso do Xcode?", a1:"Não — nem para usar o GitBeat, nem para compilar. Ele compila com as Command Line Tools, que são gratuitas. O Xcode só ajuda se você quiser mexer no código com preview e depurador.",
     q2:"Por que o GitBeat mostra mais commits que o meu perfil no GitHub?", a2:"O calendário do perfil só conta repositórios privados quando a opção “Include private contributions on my profile” está ligada. O GitBeat lê o histórico de cada repositório direto, então o trabalho privado conta de qualquer jeito.",
     q3:"O custo é o que eu pago de verdade?", a3:"Não. É quanto o mesmo uso custaria a preço de API da Anthropic — uma noção de escala. Na assinatura Pro ou Max você não paga por token. O OpenCode grava o próprio custo; Codex e Gemini CLI não, então contam como zero.",
     q4:"O que acontece com meu histórico quando o Claude Code apaga conversas antigas?", a4:"Nada se perde. O GitBeat guarda os números no próprio histórico, um arquivo por mês por Mac, no seu Mac e no iCloud Drive. Abra em outro Mac com a mesma conta do iCloud e você vê os dois.",
