@@ -9,7 +9,7 @@ App de Mac para quem programa com IA, com anéis de meta e sequências: tokens p
 
 ## Comandos
 - Checagens: `swift run GitBeatChecks` · com os dados reais: `swift run -c release GitBeatChecks --real`
-- Rodar: `swift run GitBeat` · Montar o app: `scripts/build-app.sh` (`--install` copia para /Applications)
+- Rodar: `swift run GitBeat` · Montar o app: `scripts/build-app.sh` (`--install` copia para /Applications; `--notarize` assina com Developer ID e notariza)
 - Capturas de todas as telas (en/pt, glass/clássico, claro/escuro): `.build/release/GitBeat --snapshot <pasta>`
 - Docs: `scripts/check-docs.sh` · Site local: configuração `site` em `.claude/launch.json` (porta 8787)
 
@@ -33,4 +33,5 @@ App de Mac para quem programa com IA, com anéis de meta e sequências: tokens p
 | mexer em interface ou texto | `DESIGN.md` |
 | mudar leitura de dados, histórico ou GitHub | `docs/arquitetura.md` |
 | mudar uma decisão já tomada | `docs/decisoes.md` |
+| assinar, notarizar ou distribuir o app | `docs/distribuicao.md` |
 | commit, PR ou merge | skill `fluxo-github` |

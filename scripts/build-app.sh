@@ -1,9 +1,32 @@
 #!/bin/zsh
 # Compila em release e monta build/GitBeat.app (não precisa do Xcode).
-# Uso: scripts/build-app.sh            → só monta
-#      scripts/build-app.sh --install  → copia para /Applications
+# Uso: scripts/build-app.sh                      → só monta
+#      scripts/build-app.sh --install            → copia para /Applications
+#      scripts/build-app.sh --notarize           → assina com Developer ID, notariza e gera build/GitBeat.zip
+#      (as opções podem ir juntas, em qualquer ordem)
+# Assinatura: usa o certificado "Developer ID Application" do Keychain, se existir
+# (ou o nome em GITBEAT_SIGN_ID); sem ele, assina só localmente (ad hoc).
+# Notarização: perfil "gitbeat-notary" do notarytool (ou GITBEAT_NOTARY_PROFILE).
+# Passo a passo em docs/distribuicao.md.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+
+INSTALL=0; NOTARIZE=0
+for arg in "$@"; do
+  case "$arg" in
+    --install) INSTALL=1 ;;
+    --notarize) NOTARIZE=1 ;;
+    *) echo "Opção desconhecida: $arg" >&2; exit 2 ;;
+  esac
+done
+
+SIGN_ID="${GITBEAT_SIGN_ID:-$(security find-identity -v -p codesigning 2>/dev/null \
+  | sed -n 's/.*"\(Developer ID Application:[^"]*\)".*/\1/p' | head -1)}"
+NOTARY_PROFILE="${GITBEAT_NOTARY_PROFILE:-gitbeat-notary}"
+if [[ $NOTARIZE == 1 && -z "$SIGN_ID" ]]; then
+  echo "Sem certificado Developer ID no Keychain: não dá para notarizar. Veja docs/distribuicao.md." >&2
+  exit 1
+fi
 
 APP=build/GitBeat.app
 swift build -c release --product GitBeat
@@ -46,10 +69,30 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 </plist>
 PLIST
 
-codesign --force --sign - "$APP" >/dev/null   # assinatura local (ad hoc)
+if [[ -n "$SIGN_ID" ]]; then
+  # Runtime endurecido + carimbo de hora: exigidos pela notarização.
+  codesign --force --options runtime --timestamp --sign "$SIGN_ID" "$APP"
+  codesign --verify --strict --verbose=2 "$APP"
+  echo "Assinado com: $SIGN_ID"
+else
+  codesign --force --sign - "$APP" >/dev/null   # assinatura local (ad hoc)
+  echo "Assinado só localmente (sem Developer ID no Keychain)."
+fi
+
+if [[ $NOTARIZE == 1 ]]; then
+  ZIP=build/GitBeat.zip
+  rm -f "$ZIP"
+  ditto -c -k --keepParent "$APP" "$ZIP"
+  xcrun notarytool submit "$ZIP" --keychain-profile "$NOTARY_PROFILE" --wait
+  xcrun stapler staple "$APP"
+  spctl --assess --type execute --verbose=2 "$APP"
+  rm -f "$ZIP"
+  ditto -c -k --keepParent "$APP" "$ZIP"   # zip final já com o ticket grampeado
+  echo "Notarizado: $APP e $ZIP"
+fi
 echo "Pronto: $APP"
 
-if [[ "${1:-}" == "--install" ]]; then
+if [[ $INSTALL == 1 ]]; then
   rm -rf "/Applications/GitBeat.app"
   cp -R "$APP" /Applications/
   echo "Instalado em /Applications/GitBeat.app"
