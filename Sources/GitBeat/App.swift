@@ -75,9 +75,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 
     @MainActor static func showAboutPanel() {
-        let credits = NSAttributedString(
-            string: T("Proudly developed by Jason Mello", "Orgulhosamente desenvolvido por Jason Mello"),
-            attributes: [.font: NSFont.systemFont(ofSize: 11), .foregroundColor: NSColor.secondaryLabelColor])
+        let base: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 11),
+                                                   .foregroundColor: NSColor.secondaryLabelColor]
+        let credits = NSMutableAttributedString(
+            string: T("Proudly developed by ", "Orgulhosamente desenvolvido por "), attributes: base)
+        // O nome é um link para o GitHub do autor.
+        credits.append(NSAttributedString(string: Brand.author, attributes: [
+            .font: NSFont.systemFont(ofSize: 11, weight: .semibold),
+            .link: Brand.authorURL,
+        ]))
+        let centered = NSMutableParagraphStyle()
+        centered.alignment = .center
+        credits.addAttribute(.paragraphStyle, value: centered, range: NSRange(location: 0, length: credits.length))
         NSApp.orderFrontStandardAboutPanel(options: [.credits: credits, .applicationName: Brand.name])
         NSApp.activate()
     }

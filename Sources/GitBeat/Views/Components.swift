@@ -22,22 +22,26 @@ struct Card<Content: View>: View {
     }
 
     private var inner: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
-                Image(systemName: systemImage)
-                Text(title).tracking(-0.1)
+                Label {
+                    Text(title)
+                } icon: {
+                    Image(systemName: systemImage).symbolRenderingMode(.hierarchical)
+                }
+                .font(.headline)
+                .foregroundStyle(tint)
                 Spacer()
+                // Rótulo de apoio e seta em cinza: a cor fica só no título.
                 if let trailing {
-                    Text(trailing).eyebrow().foregroundStyle(.secondary)
+                    Text(trailing).font(.subheadline).foregroundStyle(.secondary)
                 }
                 if action != nil {
                     Image(systemName: "chevron.right")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.tertiary)
                 }
             }
-            .font(.subheadline.weight(.semibold))
-            .foregroundStyle(tint)
             content
         }
         .padding(Theme.cardPadding)
@@ -60,12 +64,12 @@ struct BigValue: View {
             }
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text(value)
-                    .font(.system(size: 30, weight: .semibold, design: .rounded))
-                    .tracking(-0.9)
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .tracking(-0.6)
                     .monospacedDigit()
                     .contentTransition(.numericText())
                 if let unit {
-                    Text(unit).font(.title3).tracking(-0.2).foregroundStyle(.secondary)
+                    Text(unit).font(.system(.title3, design: .rounded).weight(.semibold)).foregroundStyle(.secondary)
                 }
             }
         }
@@ -83,11 +87,12 @@ struct ActivityRings: View {
     var size: CGFloat
 
     var body: some View {
-        let line = size * 0.13
+        let line = size * 0.12
+        let gap = max(size * 0.015, 1.5)
         ZStack {
             ForEach(Array(values.enumerated()), id: \.offset) { index, v in
                 Ring(progress: v.progress, color: v.color, lineWidth: line)
-                    .padding(CGFloat(index) * (line + 2))
+                    .padding(CGFloat(index) * (line + gap))
             }
         }
         .frame(width: size, height: size)
@@ -109,19 +114,35 @@ struct Ring: View {
     var body: some View {
         let target = shown ? progress : 0
         let first = min(max(target, 0), 1)
-        let second = min(max(target - 1, 0), 1)
+        // Depois da primeira volta o anel continua por cima de si mesmo, até a terceira.
+        let lap = min(max(target - 1, 0), 2)
+        let second = lap > 1 ? 1 : lap
         ZStack {
-            Circle().stroke(color.opacity(0.16), lineWidth: lineWidth)
+            Circle().stroke(color.opacity(0.2), lineWidth: lineWidth)   // trilha: a mesma cor, apagada
             Circle()
                 .trim(from: 0, to: first)
                 .stroke(color.gradient, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-            if second > 0 {
+            if lap > 0 {
                 Circle()
                     .trim(from: 0, to: second)
                     .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                     .rotationEffect(.degrees(-90))
-                    .shadow(color: .black.opacity(0.35), radius: 2)
+            }
+            // Só a ponta faz sombra sobre a volta de baixo: mostra que passou da meta sem escurecer
+            // o anel inteiro. Volta fechada certinha (200%, 300%) não tem ponta: o anel está completo.
+            let tip = lap.truncatingRemainder(dividingBy: 1)
+            if lap > 0, tip > 0.005, tip < 0.995 {
+                GeometryReader { geo in
+                    let r = (min(geo.size.width, geo.size.height)) / 2
+                    let angle = Angle.degrees(360 * tip - 90)
+                    Circle()
+                        .fill(color)
+                        .frame(width: lineWidth, height: lineWidth)
+                        .shadow(color: .black.opacity(0.45), radius: lineWidth * 0.18, x: 0, y: 0)
+                        .position(x: geo.size.width / 2 + r * cos(angle.radians),
+                                  y: geo.size.height / 2 + r * sin(angle.radians))
+                }
             }
         }
         .padding(lineWidth / 2)
@@ -139,17 +160,21 @@ struct RingLegend: View {
     var color: Color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 1) {
+        VStack(alignment: .leading, spacing: 0) {
             Text(title).eyebrow().foregroundStyle(.secondary)
-            HStack(alignment: .firstTextBaseline, spacing: 3) {
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(value)
-                    .font(.system(size: 22, weight: .semibold, design: .rounded))
-                    .tracking(-0.5)
-                    .monospacedDigit()
-                Text("/ \(goal)").font(.subheadline).monospacedDigit().foregroundStyle(.secondary)
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .tracking(-0.4)
+                    .foregroundStyle(color)
+                    .lineLimit(1)
+                Text("/\(goal)")
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .foregroundStyle(color.opacity(0.75))
             }
-            .foregroundStyle(color)
+            .monospacedDigit()
         }
+        .fixedSize()
     }
 }
 
@@ -200,7 +225,7 @@ struct BarChart: View {
                         }
                         .padding(.horizontal, 10)
                         .padding(.vertical, 7)
-                        .cardSurface(radius: Theme.Radius.control, elevated: true)
+                        .floatingSurface()
                     }
             }
         }
@@ -287,10 +312,10 @@ struct ProportionList: View {
                         Capsule().fill(Theme.well)
                             .overlay(alignment: .leading) {
                                 Capsule().fill(tint.gradient)
-                                    .frame(width: max(4, geo.size.width * row.value / max(maxValue, 1)))
+                                    .frame(width: max(6, geo.size.width * row.value / max(maxValue, 1)))
                             }
                     }
-                    .frame(height: 5)
+                    .frame(height: 6)
                 }
             }
         }
@@ -308,8 +333,8 @@ struct PageHeader: View {
                 Text(subtitle).eyebrow().foregroundStyle(.secondary)
             }
             Text(title)
-                .font(.system(size: 30, weight: .bold))
-                .tracking(-1.0)
+                .font(.system(size: 28, weight: .bold))
+                .tracking(-0.6)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.bottom, 2)
