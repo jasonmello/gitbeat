@@ -11,7 +11,9 @@ struct GitBeatApp: App {
     var body: some Scene {
         Window(Brand.name, id: "main") {
             RootView()
+                .foregroundStyle(Theme.ink)   // texto ameixa; .secondary deriva dele
                 .environment(model)
+                .tint(Brand.violet)   // destaque do sistema (seleção, botões, chaves) no roxo do mascote
                 .preferredColorScheme(prefs.mode.colorScheme)
                 .frame(minWidth: 900, minHeight: 620)
         }
@@ -24,7 +26,9 @@ struct GitBeatApp: App {
 
         MenuBarExtra {
             MenuBarView()
+                .foregroundStyle(Theme.ink)
                 .environment(model)
+                .tint(Brand.violet)   // destaque do sistema (seleção, botões, chaves) no roxo do mascote
                 .preferredColorScheme(prefs.mode.colorScheme)
         } label: {
             MenuBarLabel(model: model, mascot: model.menuMascot)
@@ -34,6 +38,7 @@ struct GitBeatApp: App {
         Settings {
             SettingsView()
                 .environment(model)
+                .tint(Brand.violet)   // destaque do sistema (seleção, botões, chaves) no roxo do mascote
                 .preferredColorScheme(prefs.mode.colorScheme)
         }
     }

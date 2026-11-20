@@ -19,7 +19,7 @@ struct SummaryView: View {
             }
 
             HStack(alignment: .top, spacing: Theme.gap) {
-                Card(title: T("Today's rings", "Anéis de hoje"), systemImage: "circle.circle", tint: .red,
+                Card(title: T("Today's rings", "Anéis de hoje"), systemImage: "circle.circle", tint: Theme.tokens,
                      action: { selection = .goals }) {
                     // A semana em anéis aparece quando cabe; em janela estreita, só hoje.
                     ViewThatFits(in: .horizontal) {

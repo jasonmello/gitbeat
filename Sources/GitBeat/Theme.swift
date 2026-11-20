@@ -4,37 +4,43 @@ import GitBeatCore
 /// Tokens visuais do app. Ver DESIGN.md. Componentes nunca usam cor, raio, sombra ou duração soltos.
 enum Theme {
     // MARK: cores dos assuntos (cores de dado, uma por assunto, usadas também nos anéis)
-    static let tokens = Color.pink
-    static let time = Color.teal
-    /// Verde dos commits (era o verde da marca antiga; ficou como cor de dado).
-    static let github = Color(red: 0, green: 0.788, blue: 0.584)   // #00C995
-    static let cost = Color.purple
-    static let streak = Color.orange
+    // Tons médios e suaves, da família do mascote: legíveis como texto sobre o creme e sobre o ameixa.
+    static let tokens = Color(red: 0.937, green: 0.384, blue: 0.533)   // #ef6288 rosa suave
+    static let time = Color(red: 0.247, green: 0.659, blue: 0.851)     // #3fa8d9 azul-céu
+    static let github = Color(red: 0.373, green: 0.729, blue: 0.290)   // #5fba4a verde puxado ao limão da sola
+    static let cost = Color(red: 0.573, green: 0.427, blue: 0.937)     // #926def lilás
+    static let streak = Color(red: 0.933, green: 0.553, blue: 0.282)   // #ee8d48 pêssego
 
-    // MARK: neutros quentes (matiz levemente amarelado, nunca preto ou branco puros)
+    // MARK: clima do mascote (kit: lavanda, creme e ameixa no claro; ameixa profundo no escuro)
     /// Fundo da página, atrás dos cartões.
-    static let page = Adaptive(light: Color(red: 0.953, green: 0.953, blue: 0.945),   // #f3f3f1
-                               dark: Color(red: 0.043, green: 0.043, blue: 0.047))    // #0b0b0c
-    /// Cartões (sempre sólidos: o conteúdo não fica em vidro), um degrau acima da página.
-    static let raised = Adaptive(light: Color(red: 0.996, green: 0.996, blue: 0.992),  // #fefefd
-                                 dark: Color(red: 0.110, green: 0.110, blue: 0.118))   // #1c1c1e
+    static let page = Adaptive(light: Color(red: 0.961, green: 0.945, blue: 0.984),   // #f5f1fb lavanda
+                               dark: Color(red: 0.082, green: 0.051, blue: 0.118))    // #150d1e
+    /// Cartões (sempre sólidos: o conteúdo não fica em vidro): creme no claro, como os cartões do kit.
+    static let raised = Adaptive(light: Color(red: 1.0, green: 0.980, blue: 0.953),    // #fffaf3 creme
+                                 dark: Color(red: 0.133, green: 0.086, blue: 0.188))   // #221630
+    /// Cor do texto: ameixa do rosto do mascote no claro, quase branco lavanda no escuro.
+    /// `.secondary` e `.tertiary` derivam dela, então os cinzas também puxam para o ameixa.
+    static let ink = Adaptive(light: Color(red: 0.259, green: 0.090, blue: 0.373),     // #42175f
+                              dark: Color(red: 0.957, green: 0.937, blue: 0.980))      // #f4effa
     /// Trilhas, barras vazias, quadradinhos sem commit.
-    static let well = Adaptive(light: Color(red: 0.2, green: 0.17, blue: 0.1).opacity(0.08),
+    static let well = Adaptive(light: Color(red: 0.259, green: 0.090, blue: 0.373).opacity(0.07),
                                dark: Color.white.opacity(0.09))
-    /// Borda como anel fino, com alfa sobre o fundo.
-    static let hairline = Adaptive(light: Color(red: 0.2, green: 0.17, blue: 0.1).opacity(0.08),
+    /// Borda fina dos cartões: lilás no claro (#e5dced sobre creme), branco a 8% no escuro.
+    static let hairline = Adaptive(light: Color(red: 0.400, green: 0.200, blue: 0.560).opacity(0.14),
                                    dark: Color.white.opacity(0.08))
+    /// Cor da sombra dos cartões: ameixa, não preto, no claro.
+    static func shadow(dark: Bool) -> Color { dark ? .black : Color(red: 0.259, green: 0.090, blue: 0.373) }
 
     // MARK: raio por papel
     enum Radius {
-        static let control: CGFloat = 8
-        static let card: CGFloat = 18
-        static let panel: CGFloat = 22
+        static let control: CGFloat = 10
+        static let card: CGFloat = 22
+        static let panel: CGFloat = 28
         /// Elemento dentro de um cartão: raio concêntrico (externo − espaço até a borda).
         static func inner(padding: CGFloat) -> CGFloat { max(card - padding, 4) }
     }
 
-    static let cardPadding: CGFloat = 16
+    static let cardPadding: CGFloat = 18
     static let gap: CGFloat = 16
 }
 
@@ -112,9 +118,9 @@ private struct CardSurface: ViewModifier {
         return content
             .background(
                 shape.fill(Theme.raised)
-                    .shadow(color: .black.opacity(dark ? 0.30 : 0.035), radius: 1, y: 1)           // contato
-                    .shadow(color: .black.opacity(dark ? (elevated ? 0.50 : 0.25) : (elevated ? 0.09 : 0.035)),
-                            radius: elevated ? 16 : 10, y: elevated ? 8 : 4)                         // ambiente
+                    .shadow(color: Theme.shadow(dark: dark).opacity(dark ? 0.30 : 0.05), radius: 1, y: 1)       // contato
+                    .shadow(color: Theme.shadow(dark: dark).opacity(dark ? (elevated ? 0.50 : 0.25) : (elevated ? 0.14 : 0.06)),
+                            radius: elevated ? 20 : 14, y: elevated ? 10 : 6)                                   // ambiente
             )
             .overlay(shape.strokeBorder(Theme.hairline, lineWidth: 1))
             .overlay( // "lip": luz de 1px no topo
