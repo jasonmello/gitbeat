@@ -228,6 +228,8 @@ footer{border-top:1px solid var(--line)}
 footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding-top:28px;padding-bottom:36px;font-size:13px;color:var(--muted)}
 footer .credit{display:flex;align-items:center;gap:8px}
 footer .credit svg{width:14px;height:14px;color:var(--mint)}
+footer .credit .author{color:inherit;text-decoration:none}
+footer .credit .author:hover{text-decoration:underline}
 footer b{color:var(--text);font-weight:600}
 
 /* Revelar ao rolar (só com JS ativo, para o conteúdo nunca sumir sem ele) */
@@ -502,7 +504,7 @@ footer b{color:var(--text);font-weight:600}
 
 <footer>
   <div class="wrap">
-    <span class="credit"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2Z"/></svg><span data-i18n-html="credit">Proudly developed by <b>Jason Mello</b></span></span>
+    <span class="credit"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2Z"/></svg><span data-i18n-html="credit">Proudly developed by <a class="author" href="https://github.com/jasonmello"><b>Jason Mello</b></a></span></span>
     <span><a href="https://github.com/jasonmello/gitbeat">GitHub</a> · <span data-i18n="preview">Private preview</span></span>
   </div>
 </footer>
@@ -575,7 +577,7 @@ footer b{color:var(--text);font-weight:600}
     q5:"Funciona com o Cursor?", a5:"Ainda não. O Cursor guarda o uso na sua conta online em vez de no Mac, então não há nada local para ler.",
     closeEyebrow:"Encontre o seu ritmo", closeTitle:"Construiu algo hoje? Veja o ritmo por trás.",
     closeText:"Instale o GitBeat e veja seus anéis se completarem amanhã.",
-    credit:"Orgulhosamente desenvolvido por <b>Jason Mello</b>", preview:"Prévia privada"
+    credit:"Orgulhosamente desenvolvido por <a class="author" href="https://github.com/jasonmello"><b>Jason Mello</b></a>", preview:"Prévia privada"
   };
 
   // Guarda o inglês original de cada elemento na primeira troca

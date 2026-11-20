@@ -8,7 +8,8 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     var displayName: String { self == .en ? "English" : "Português" }
 }
 
-/// Liquid Glass é o visual oficial; Clássico usa cartões sólidos (e é o que aparece antes do macOS 26).
+/// Liquid Glass é o visual oficial: vidro na camada que flutua (a do sistema e a dica do gráfico),
+/// conteúdo em cartões sólidos. Clássico tira o vidro da dica (e é o que aparece antes do macOS 26).
 enum VisualStyle: String, CaseIterable, Identifiable {
     case glass, classic
     var id: String { rawValue }

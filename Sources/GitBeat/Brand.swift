@@ -8,6 +8,8 @@ enum Brand {
     static let green = Color(red: 0, green: 0.788, blue: 0.584)
     static let name = "GitBeat"
     static let author = "Jason Mello"
+    /// Todo crédito ao autor leva para o GitHub dele.
+    static let authorURL = URL(string: "https://github.com/jasonmello")!
 
     static let logoSVG = #"""
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 280" role="img" aria-labelledby="title"><title id="title">GitBeat</title><g transform="translate(20 10)"><g fill="none" stroke="#00C995" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">

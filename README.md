@@ -12,7 +12,7 @@ scripts/build-app.sh --install
 
 **Do I need Xcode?** No. GitBeat builds with the free Command Line Tools (`xcode-select --install`). Xcode only helps if you want to edit the code with previews and a debugger. GitHub data needs the GitHub CLI signed in (`gh auth login`).
 
-Proudly developed by Jason Mello.
+Proudly developed by [Jason Mello](https://github.com/jasonmello).
 
 ---
 

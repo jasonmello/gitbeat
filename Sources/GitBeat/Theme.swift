@@ -12,11 +12,11 @@ enum Theme {
 
     // MARK: neutros quentes (matiz levemente amarelado, nunca preto ou branco puros)
     /// Fundo da página, atrás dos cartões.
-    static let page = Adaptive(light: Color(red: 0.961, green: 0.961, blue: 0.953),   // #f5f5f3
-                               dark: Color(red: 0.055, green: 0.055, blue: 0.059))    // #0e0e0f
-    /// Cartões e popovers no visual clássico, um degrau acima da página.
-    static let raised = Adaptive(light: Color(red: 0.992, green: 0.992, blue: 0.988),  // #fdfdfc
-                                 dark: Color(red: 0.098, green: 0.098, blue: 0.106))   // #19191b
+    static let page = Adaptive(light: Color(red: 0.953, green: 0.953, blue: 0.945),   // #f3f3f1
+                               dark: Color(red: 0.043, green: 0.043, blue: 0.047))    // #0b0b0c
+    /// Cartões (sempre sólidos: o conteúdo não fica em vidro), um degrau acima da página.
+    static let raised = Adaptive(light: Color(red: 0.996, green: 0.996, blue: 0.992),  // #fefefd
+                                 dark: Color(red: 0.110, green: 0.110, blue: 0.118))   // #1c1c1e
     /// Trilhas, barras vazias, quadradinhos sem commit.
     static let well = Adaptive(light: Color(red: 0.2, green: 0.17, blue: 0.1).opacity(0.08),
                                dark: Color.white.opacity(0.09))
@@ -81,53 +81,28 @@ extension View {
 
 // MARK: fundo da janela
 
-/// Fundo da página. No Liquid Glass, três manchas de luz bem difusas nas cores dos assuntos
-/// dão ao vidro o que refratar; no clássico, só o neutro quente.
+/// Fundo da página: neutro, sem manchas coloridas. Cor atrás do texto tira contraste;
+/// a cor fica nos dados (anéis, barras, títulos dos cartões).
 struct AppBackground: View {
-    @Environment(\.colorScheme) private var scheme
-
     var body: some View {
-        ZStack {
-            Rectangle().fill(Theme.page)
-            if Preferences.shared.usesGlass {
-                GeometryReader { geo in
-                    let w = geo.size.width, h = geo.size.height
-                    let strength = scheme == .dark ? 0.30 : 0.22
-                    ZStack {
-                        glow(Theme.tokens, size: w * 0.55).position(x: w * 0.12, y: h * 0.08)
-                        glow(Theme.time, size: w * 0.5).position(x: w * 0.92, y: h * 0.35)
-                        glow(Theme.github, size: w * 0.55).position(x: w * 0.35, y: h * 0.95)
-                    }
-                    .opacity(strength)
-                }
-            }
-        }
-        .ignoresSafeArea()
-    }
-
-    private func glow(_ color: Color, size: CGFloat) -> some View {
-        Circle().fill(color).frame(width: size, height: size).blur(radius: size * 0.35)
+        Rectangle().fill(Theme.page).ignoresSafeArea()
     }
 }
 
 // MARK: superfícies
 
-/// Fundo de cartão.
-/// - Liquid Glass: `glassEffect` do sistema (interativo nos cartões clicáveis).
-/// - Clássico: degrau de superfície, anel fino, luz de 1px no topo e sombra em camadas de alfa baixo.
+/// Fundo de cartão: sempre sólido. Segue a regra do Liquid Glass de deixar o vidro para a
+/// camada que flutua sobre o conteúdo (barra lateral, barra de ferramentas, dicas, painéis);
+/// texto em cima de vidro perde contraste conforme o que está atrás.
+/// Degrau de superfície, anel fino, luz de 1px no topo e sombra em camadas de alfa baixo.
 private struct CardSurface: ViewModifier {
     @Environment(\.colorScheme) private var scheme
     var radius: CGFloat
     var elevated: Bool
-    var interactive: Bool
 
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
-        if Preferences.shared.usesGlass, #available(macOS 26, *) {
-            content.glassEffect(interactive ? .regular.interactive() : .regular, in: shape)
-        } else {
-            classic(content, shape: shape)
-        }
+        return classic(content, shape: shape)
     }
 
     private func classic(_ content: Content, shape: RoundedRectangle) -> some View {
@@ -136,9 +111,9 @@ private struct CardSurface: ViewModifier {
         return content
             .background(
                 shape.fill(Theme.raised)
-                    .shadow(color: .black.opacity(dark ? 0.30 : 0.04), radius: 1, y: 1)            // contato
-                    .shadow(color: .black.opacity(dark ? (elevated ? 0.55 : 0.35) : (elevated ? 0.10 : 0.045)),
-                            radius: elevated ? 14 : 8, y: elevated ? 8 : 3)                          // ambiente
+                    .shadow(color: .black.opacity(dark ? 0.30 : 0.035), radius: 1, y: 1)           // contato
+                    .shadow(color: .black.opacity(dark ? (elevated ? 0.50 : 0.25) : (elevated ? 0.09 : 0.035)),
+                            radius: elevated ? 16 : 10, y: elevated ? 8 : 4)                         // ambiente
             )
             .overlay(shape.strokeBorder(Theme.hairline, lineWidth: 1))
             .overlay( // "lip": luz de 1px no topo
@@ -150,15 +125,34 @@ private struct CardSurface: ViewModifier {
     }
 }
 
+/// Superfície que flutua sobre o conteúdo (dica do gráfico): Liquid Glass no visual padrão,
+/// cartão sólido elevado no Clássico ou antes do macOS 26.
+private struct FloatingSurface: ViewModifier {
+    var radius: CGFloat
+
+    func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
+        if Preferences.shared.usesGlass, #available(macOS 26, *) {
+            content.glassEffect(.regular, in: shape)
+        } else {
+            content.cardSurface(radius: radius, elevated: true)
+        }
+    }
+}
+
 extension View {
-    func cardSurface(radius: CGFloat = Theme.Radius.card, elevated: Bool = false, interactive: Bool = false) -> some View {
-        modifier(CardSurface(radius: radius, elevated: elevated, interactive: interactive))
+    func cardSurface(radius: CGFloat = Theme.Radius.card, elevated: Bool = false) -> some View {
+        modifier(CardSurface(radius: radius, elevated: elevated))
     }
 
-    /// Rótulo pequeno em caixa alta, mono, com tracking positivo ("DAILY AVERAGE", "TODAY").
+    func floatingSurface(radius: CGFloat = Theme.Radius.control) -> some View {
+        modifier(FloatingSurface(radius: radius))
+    }
+
+    /// Rótulo pequeno em caixa alta ("DAILY AVERAGE", "TOKENS"), na fonte do sistema.
     func eyebrow() -> some View {
-        font(.system(size: 10.5, weight: .medium, design: .monospaced))
-            .tracking(0.8)
+        font(.system(size: 11, weight: .semibold))
+            .tracking(0.4)
             .textCase(.uppercase)
     }
 }
@@ -192,7 +186,7 @@ struct PressableCardStyle: ButtonStyle {
 
         var body: some View {
             configuration.label
-                .cardSurface(elevated: hovering, interactive: true)
+                .cardSurface(elevated: hovering)
                 .overlay { if isFocused { FocusRing(radius: Theme.Radius.card) } }
                 .scaleEffect(configuration.isPressed ? Motion.pressScale : 1)
                 .motion(configuration.isPressed ? Motion.instant : Motion.fast, value: configuration.isPressed)

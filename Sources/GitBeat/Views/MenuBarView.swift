@@ -12,67 +12,97 @@ struct MenuBarView: View {
         let r = model.rings(on: today)
         let tokens = model.tokens(on: today)
 
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .firstTextBaseline) {
                 BrandLogo(height: 18)
                 Spacer()
-                Text(T("Today", "Hoje")).eyebrow().foregroundStyle(.secondary)
+                Text(Fmt.day(Date())).font(.subheadline).foregroundStyle(.secondary)
             }
+
             HStack(spacing: 18) {
                 ActivityRings(values: [
                     .init(progress: r.tokens, color: Theme.tokens),
                     .init(progress: r.hours, color: Theme.time),
                     .init(progress: r.commits, color: Theme.github),
-                ], size: 92)
-                VStack(alignment: .leading, spacing: 6) {
-                    row("Tokens", Fmt.tokens(tokens.total), Theme.tokens)
-                    row(T("Time", "Tempo"), Fmt.hours(model.hours(on: today)), Theme.time)
-                    row("Commits", Fmt.int(model.commits(on: today)), Theme.github)
-                    row(T("Cost", "Custo"), Fmt.money(tokens.cost), Theme.cost)
+                ], size: 96)
+                // Número na cor do texto (lê bem sobre qualquer fundo do painel);
+                // a cor do assunto fica no anel e no pontinho.
+                VStack(alignment: .leading, spacing: 9) {
+                    row("Tokens", Fmt.tokens(tokens.total), goal: Fmt.tokens(model.goals.tokens), Theme.tokens)
+                    row(T("Time", "Tempo"), Fmt.shortHours(model.hours(on: today)),
+                        goal: Fmt.shortHours(model.goals.hours), Theme.time)
+                    row("Commits", Fmt.int(model.commits(on: today)), goal: Fmt.int(model.goals.commits), Theme.github)
                 }
             }
-            HStack(spacing: 6) {
-                Image(systemName: "flame.fill").foregroundStyle(Theme.streak)
-                Text("\(model.currentStreak) \(Fmt.days(model.currentStreak)) " + T("in a row", "seguidos"))
-                    .font(.callout).monospacedDigit()
-                if model.streakAtRisk {
-                    Text(T("ends today", "termina hoje")).eyebrow().foregroundStyle(Theme.streak)
-                }
+
+            HStack(spacing: 8) {
+                chip(systemImage: "flame.fill", tint: Theme.streak,
+                     text: "\(model.currentStreak) \(Fmt.days(model.currentStreak))",
+                     detail: model.streakAtRisk ? T("ends today", "termina hoje") : nil)
+                chip(systemImage: "dollarsign.circle.fill", tint: Theme.cost,
+                     text: Fmt.money(tokens.cost), detail: nil)
+                    .help(T("Equivalent cost today, at API prices", "Custo equivalente de hoje, a preço da API"))
             }
+
             Divider()
-            HStack {
-                Button(T("Open dashboard", "Abrir painel")) {
+
+            HStack(spacing: 4) {
+                Button {
                     openWindow(id: "main")
                     NSApp.activate()
+                } label: {
+                    Text(T("Open GitBeat", "Abrir o GitBeat")).frame(maxWidth: .infinity)
                 }
+                .controlSize(.large)
                 .keyboardShortcut(.defaultAction)
-                Spacer()
                 Button {
                     Task { await model.refresh(forceGitHub: true) }
                 } label: {
-                    Image(systemName: "arrow.clockwise")
+                    Image(systemName: "arrow.clockwise").frame(width: 28, height: 28)
                 }
+                .buttonStyle(.borderless)
                 .disabled(model.isLoading)
                 .help(T("Refresh", "Atualizar"))
                 Button {
                     NSApp.terminate(nil)
                 } label: {
-                    Image(systemName: "power")
+                    Image(systemName: "power").frame(width: 28, height: 28)
                 }
+                .buttonStyle(.borderless)
                 .help(T("Quit GitBeat", "Sair do GitBeat"))
             }
+            .foregroundStyle(.secondary)
         }
-        .padding(16)
-        .frame(width: 300)
+        .padding(18)
+        .frame(width: 320)
         .onAppear { model.refreshIfStale() }
     }
 
-    private func row(_ title: String, _ value: String, _ color: Color) -> some View {
-        HStack {
-            Text(title).foregroundStyle(.secondary)
-            Spacer()
-            Text(value).fontWeight(.semibold).foregroundStyle(color).monospacedDigit()
+    private func row(_ title: String, _ value: String, goal: String, _ color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            HStack(spacing: 5) {
+                Circle().fill(color).frame(width: 7, height: 7)
+                Text(title).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+            }
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(value).font(.system(size: 19, weight: .bold, design: .rounded)).foregroundStyle(.primary)
+                Text("/\(goal)").font(.system(.subheadline, design: .rounded).weight(.medium)).foregroundStyle(.secondary)
+            }
+            .monospacedDigit()
         }
-        .font(.callout)
+    }
+
+    private func chip(systemImage: String, tint: Color, text: String, detail: String?) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: systemImage).foregroundStyle(tint)
+            Text(text).fontWeight(.semibold).monospacedDigit()
+            if let detail {
+                Text(detail).foregroundStyle(tint)
+            }
+        }
+        .font(.subheadline)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Capsule().fill(Theme.well))
     }
 }

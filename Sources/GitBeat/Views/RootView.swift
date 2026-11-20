@@ -105,12 +105,28 @@ struct RootView: View {
     }
 }
 
-/// "Proudly developed by Jason Mello", no rodapé da barra lateral e no painel Sobre.
+/// "Proudly developed by Jason Mello", no rodapé da barra lateral, nos Ajustes e em About the data.
+/// O nome é um link para o GitHub do autor.
 struct CreditLine: View {
+    @ViewState private var hovering = false
+
     var body: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: 4) {
             Image(systemName: "heart.fill").foregroundStyle(Brand.green)
-            Text(T("Proudly developed by ", "Orgulhosamente desenvolvido por ")) + Text(Brand.author).fontWeight(.semibold)
+            Text(T("Proudly developed by", "Orgulhosamente desenvolvido por"))
+            Link(destination: Brand.authorURL) {
+                Text(Brand.author)
+                    .fontWeight(.semibold)
+                    .underline(hovering)
+                    .foregroundStyle(.primary)
+            }
+            .buttonStyle(.plain)
+            .onHover { inside in
+                hovering = inside
+                if inside { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+            }
+            .help("github.com/jasonmello")
+            .accessibilityHint(T("Opens Jason Mello's GitHub", "Abre o GitHub do Jason Mello"))
         }
         .font(.caption)
         .foregroundStyle(.secondary)
