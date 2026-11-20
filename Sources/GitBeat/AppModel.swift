@@ -55,7 +55,7 @@ final class AppModel {
 
     let days = DayKeys()
     private let claude: UsageStore
-    private let codex: FileSource
+    private let codex: CodexSource
     private let gemini: FileSource
     private let archive: HistoryArchive
     private let githubClient = GitHubClient()
@@ -94,9 +94,10 @@ final class AppModel {
         Self.migrateOldSupportFolder()
         let support = Self.supportDir
         claude = UsageStore(cacheURL: support.appendingPathComponent("claude-usage.json"))
-        codex = FileSource(roots: CodexParser.roots, extensions: ["jsonl"],
-                           cacheURL: support.appendingPathComponent("codex-usage.json")) { url, data in
-            CodexParser.parse(fileContents: data, fileID: url.deletingPathExtension().lastPathComponent)
+        // Leitura incremental (ver CodexSource); o cache antigo, que relia arquivos inteiros, é apagado.
+        codex = CodexSource(cacheURL: support.appendingPathComponent("codex-usage-v2.json"))
+        for old in ["codex-usage.json", "github.json"] {
+            try? FileManager.default.removeItem(at: support.appendingPathComponent(old))
         }
         gemini = FileSource(roots: [GeminiParser.root], extensions: ["jsonl", "json"],
                             cacheURL: support.appendingPathComponent("gemini-usage.json")) { url, data in
@@ -232,12 +233,22 @@ final class AppModel {
             let records = UsageStore.dedupe(own + stored.others)
 
             let stamps = records.map(\.timestamp)
+            // Chave do dia calculada uma vez para os quatro agrupamentos (formatar data é caro),
+            // e o nome do modelo uma vez por modelo, não por registro.
+            let keys = days.keys(stamps)
+            var modelNames: [String: String] = [:]
+            func modelName(_ id: String) -> String {
+                if let hit = modelNames[id] { return hit }
+                let name = Pricing.displayName(for: id)
+                modelNames[id] = name
+                return name
+            }
             let monthAgo = Date().addingTimeInterval(-30 * 86_400)
             return Computed(
-                tokensByDay: Stats.tokensByDay(records, days: days),
-                byProject: Stats.tokensByDay(records, days: days) { $0.project },
-                byModel: Stats.tokensByDay(records, days: days) { Pricing.displayName(for: $0.model) },
-                byTool: Stats.tokensByDay(records, days: days) { Tool.displayName($0.tool) },
+                tokensByDay: Stats.tokensByDay(records, days: days, keys: keys),
+                byProject: Stats.tokensByDay(records, days: days, keys: keys) { $0.project },
+                byModel: Stats.tokensByDay(records, days: days, keys: keys) { modelName($0.model) },
+                byTool: Stats.tokensByDay(records, days: days, keys: keys) { Tool.displayName($0.tool) },
                 secondsByDay: SessionTime.activeSecondsByDay(stamps, days: days),
                 responsesByHour: SessionTime.responsesByHour(stamps.filter { $0 >= monthAgo }, calendar: days.calendar),
                 firstDay: records.first.map { days.key($0.timestamp) },
