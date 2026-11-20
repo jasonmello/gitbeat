@@ -214,6 +214,43 @@ enum OtherToolTests {
         expect(records.first?.tool == Tool.codex)
     }
 
+    /// Ler em pedaços (o que já havia, depois o que foi acrescentado) dá os mesmos registros e ids
+    /// que ler o arquivo inteiro, inclusive com uma linha pela metade entre as duas leituras.
+    static func codexIncrementalMatchesFullRead() throws {
+        let lines = [
+            #"{"timestamp":"2026-11-19T10:00:00Z","type":"session_meta","payload":{"id":"s1","cwd":"/Users/x/Developer/sample-app"}}"#,
+            #"{"timestamp":"2026-11-19T10:00:01Z","type":"turn_context","payload":{"cwd":"/Users/x/Developer/sample-app","model":"gpt-5"}}"#,
+            #"{"timestamp":"2026-11-19T10:00:02Z","type":"response_item","payload":{"type":"message","content":"texto longo da conversa"}}"#,
+            #"{"timestamp":"2026-11-19T10:00:05Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":1000,"cached_input_tokens":800,"output_tokens":50}}}}"#,
+            #"{"timestamp":"2026-11-19T10:01:00Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":2500,"cached_input_tokens":1900,"output_tokens":120}}}}"#,
+            #"{"timestamp":"2026-11-19T10:02:00Z","type":"turn_context","payload":{"cwd":"/Users/x/Developer/sample-app","model":"gpt-5.1"}}"#,
+            #"{"timestamp":"2026-11-19T10:03:00Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":4000,"cached_input_tokens":3000,"output_tokens":300}}}}"#,
+        ]
+        let whole = lines.joined(separator: "\n") + "\n"
+        let full = CodexParser.parse(fileContents: Data(whole.utf8), fileID: "sessao")
+
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("gitbeat-codex-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let file = dir.appendingPathComponent("sessao.jsonl")
+        let source = CodexSource(roots: [dir], cacheURL: dir.appendingPathComponent("cache.json"))
+
+        // 1ª leitura: as 4 primeiras linhas e metade da 5ª (ainda sendo gravada).
+        let cut = lines[0..<4].joined(separator: "\n").utf8.count + 1 + 30
+        try Data(whole.utf8.prefix(cut)).write(to: file)
+        let first = source.refresh()
+        expect(first.count == 1)
+        // 2ª leitura: o resto do arquivo.
+        try Data(whole.utf8).write(to: file)
+        let second = source.refresh().sorted { $0.timestamp < $1.timestamp }
+        expect(second.map(\.id) == full.map(\.id))
+        expect(second.map(\.totalTokens) == full.map(\.totalTokens))
+        expect(second.last?.model == "gpt-5.1")
+        // Um cache relido de disco continua de onde parou.
+        let reopened = CodexSource(roots: [dir], cacheURL: dir.appendingPathComponent("cache.json"))
+        expect(reopened.cached().count == full.count)
+    }
+
     static func geminiKeepsLastLinePerID() {
         let lines = [
             #"{"sessionId":"abc","projectHash":"x","startTime":"2026-11-19T10:00:00Z"}"#,
@@ -303,6 +340,16 @@ enum NotificationTests {
     }
 }
 
+run("chaves de dia em lote (DayKeys.keys)") {
+    let days = saoPaulo
+    let base = try req(days.calendar.date(from: DateComponents(year: 2026, month: 11, day: 19, hour: 22)))
+    // 30 horas em passos de 37 min, atravessando a meia-noite; e uma data fora de ordem no fim.
+    var dates = (0..<49).map { base.addingTimeInterval(Double($0) * 37 * 60) }
+    dates.append(base.addingTimeInterval(-3 * 86_400))
+    expect(days.keys(dates) == dates.map(days.key))
+    expect(Set(days.keys(dates)).count == 4)
+}
+
 run("medidor de atividade (kit do mascote)") {
     let start = Date(timeIntervalSince1970: 10_000)
     func date(_ seconds: Double) -> Date { start.addingTimeInterval(seconds) }
@@ -326,6 +373,65 @@ run("medidor de atividade (kit do mascote)") {
     edge.observe(totalTokens: 700_000, at: date(2)); expect(edge.level(at: date(2)) == .busy) // espera mínima
     expect(edge.level(at: date(3)) == .burst)
     expect(edge.recentTokens(at: date(62)) == 0)
+}
+
+if CommandLine.arguments.contains("--bench") {
+    // Cronometra as etapas de uma releitura, com os dados reais (cópia do cache, nada é gravado no do app).
+    func time<T>(_ label: String, _ body: () -> T) -> T {
+        let t0 = Date(); let r = body()
+        print(String(format: "%-34@ %7.1f ms", label as NSString, Date().timeIntervalSince(t0) * 1000))
+        return r
+    }
+    let support = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/GitBeat")
+    let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("gitbeat-bench-cache.json")
+    try? FileManager.default.removeItem(at: tmp)
+    try? FileManager.default.copyItem(at: support.appendingPathComponent("claude-usage.json"), to: tmp)
+    let store = time("abrir cache do Claude (decodificar)") { UsageStore(cacheURL: tmp) }
+    _ = time("leitura completa (1ª, varre pastas)") { store.refresh(persist: false) }
+    let claude = time("leitura completa (2ª, sem mudança)") { store.refresh(persist: false) }
+    let newest = (try? FileManager.default.contentsOfDirectory(at: UsageStore.defaultRoot, includingPropertiesForKeys: nil)) ?? []
+    _ = newest
+    let days = DayKeys()
+    let machineDirs = (try? FileManager.default.contentsOfDirectory(atPath: support.appendingPathComponent("History").path)) ?? []
+    let archive = HistoryArchive(localDir: support.appendingPathComponent("History"), cloudDir: HistoryArchive.defaultCloudDir,
+                                 machine: .init(id: machineDirs.first ?? "mac-x", name: "bench"))
+    let stored = time("carregar histórico") { archive.load() }
+    let own = time("dedupe (ferramentas + histórico)") { UsageStore.dedupe(claude + stored.own) }
+    let records = time("dedupe (+ outros Macs)") { UsageStore.dedupe(own + stored.others) }
+    let keys = time("chaves de dia (uma vez)") { days.keys(records.map(\.timestamp)) }
+    _ = time("tokensByDay") { Stats.tokensByDay(records, days: days, keys: keys) }
+    _ = time("tokensByDay por projeto") { Stats.tokensByDay(records, days: days, keys: keys) { $0.project } }
+    _ = time("tokensByDay por modelo") { var memo: [String: String] = [:]; return Stats.tokensByDay(records, days: days, keys: keys) { r in if let n = memo[r.model] { return n }; let n = Pricing.displayName(for: r.model); memo[r.model] = n; return n } }
+    _ = time("tokensByDay por ferramenta") { Stats.tokensByDay(records, days: days, keys: keys) { Tool.displayName($0.tool) } }
+    let stamps = records.map(\.timestamp)
+    _ = time("tempo ativo por dia") { SessionTime.activeSecondsByDay(stamps, days: days) }
+    var codexFiles: [(URL, Int)] = []
+    for root in CodexParser.roots {
+        guard let walker = FileManager.default.enumerator(at: root, includingPropertiesForKeys: [.fileSizeKey]) else { continue }
+        for case let url as URL in walker {
+            let size: Int = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? nil ?? 0
+            codexFiles.append((url, size))
+        }
+    }
+    if let biggest = codexFiles.max(by: { $0.1 < $1.1 })?.0, let data = try? Data(contentsOf: biggest) {
+        _ = time("Codex: reler maior sessão (\(data.count / 1_000_000) MB)") {
+            CodexParser.parse(fileContents: data, fileID: biggest.deletingPathExtension().lastPathComponent)
+        }
+    }
+    let codexTmp = FileManager.default.temporaryDirectory.appendingPathComponent("gitbeat-bench-codex.json")
+    try? FileManager.default.removeItem(at: codexTmp)
+    let incremental = time("Codex: leitura nova (1ª vez)") { CodexSource(cacheURL: codexTmp).refresh() }
+    let again = CodexSource(cacheURL: codexTmp)
+    _ = time("Codex: leitura nova (de novo)") { again.refresh() }
+    let wholeFiles = codexFiles.filter { $0.0.pathExtension == "jsonl" }.flatMap { f -> [UsageRecord] in
+        guard let d = try? Data(contentsOf: f.0) else { return [] }
+        return CodexParser.parse(fileContents: d, fileID: f.0.deletingPathExtension().lastPathComponent)
+    }
+    print("Codex igual à leitura inteira:", Set(incremental.map(\.id)) == Set(wholeFiles.map(\.id)),
+          incremental.reduce(0) { $0 + $1.totalTokens } == wholeFiles.reduce(0) { $0 + $1.totalTokens },
+          "(\(incremental.count) registros)")
+    print("registros:", records.count, "· do Claude:", claude.count, "· histórico próprio:", stored.own.count, "· outros:", stored.others.count)
+    exit(0)
 }
 
 if CommandLine.arguments.contains("--real") {
@@ -359,7 +465,8 @@ run("parser") { try ParserTests.readsUsageFromAssistantLine(); ParserTests.ignor
 run("store") { StoreTests.dedupesRepeatedMessageIds(); try StoreTests.readsIncrementallyAndKeepsPartialLineForLater() }
 run("pricing") { try PricingTests.opusCost(); PricingTests.longestPrefixWins(); PricingTests.displayNames() }
 run("stats") { StatsTests.dayKeyUsesLocalTimezone(); StatsTests.sessionTimeIgnoresLongGapsAndOverlap(); StatsTests.streaks(); StatsTests.periodBuckets() }
-run("other tools") { OtherToolTests.codexUsesCumulativeDeltas(); OtherToolTests.geminiKeepsLastLinePerID(); OtherToolTests.openCodeMessageShapes() }
+run("other tools") { OtherToolTests.codexUsesCumulativeDeltas()
+run("Codex incremental") { try OtherToolTests.codexIncrementalMatchesFullRead() }; OtherToolTests.geminiKeepsLastLinePerID(); OtherToolTests.openCodeMessageShapes() }
 run("archive") { try ArchiveTests.oldRecordsDecodeAsClaudeCode(); ArchiveTests.eachMacWritesItsOwnFolder() }
 run("notifications") { NotificationTests.plans() }
 run("github") { try GitHubTests.parsesHistory(); try GitHubTests.parsesPRPage() }

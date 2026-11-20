@@ -20,32 +20,60 @@ private func lastComponent(_ path: String?) -> String {
     ClaudeLogParser.projectName(fromCWD: path)
 }
 
+/// A linha contém algum destes trechos? Busca de bytes (memmem), bem mais barata que montar o JSON.
+private func lineContains(_ line: Data.SubSequence, anyOf needles: [[UInt8]]) -> Bool {
+    line.withUnsafeBytes { raw -> Bool in
+        guard let base = raw.baseAddress else { return false }
+        return needles.contains { n in n.withUnsafeBytes { memmem(base, raw.count, $0.baseAddress, n.count) != nil } }
+    }
+}
+
 // MARK: Codex CLI
 
 /// Codex grava um `.jsonl` por sessão em `$CODEX_HOME/sessions` (padrão `~/.codex`).
 /// Eventos `token_count` trazem `total_token_usage` (acumulado na sessão) e `last_token_usage`.
 /// Usamos a diferença do acumulado: eventos repetidos ou estimados não somam em dobro.
 public enum CodexParser {
+    /// Só estas linhas interessam; o resto (texto da conversa, a maior parte do arquivo) nem vira JSON.
+    private static let needles: [[UInt8]] = ["token_count", "session_meta", "turn_context"].map { Array($0.utf8) }
+
+    /// Onde o leitor parou num arquivo e o que ele já sabe dali (modelo, pasta, acumulados).
+    /// Com isso, a próxima leitura começa no fim do que já foi lido, em vez de reler o arquivo todo
+    /// (uma sessão longa do Codex passa de 100 MB).
+    public struct State: Codable, Sendable, Equatable {
+        public var offset: UInt64 = 0
+        public var index = 0
+        public var model = "codex"
+        public var cwd: String?
+        public var previous: [String: Int] = [:]
+        public init() {}
+    }
+
+    /// Lê o arquivo inteiro (usado nas checagens e quando não há estado guardado).
     public static func parse(fileContents data: Data, fileID: String) -> [UsageRecord] {
+        var state = State()
+        return parse(chunk: data, fileID: fileID, state: &state)
+    }
+
+    /// Lê um pedaço que termina numa quebra de linha, continuando de `state`. Os ids ("codex:<arquivo>:<linha>")
+    /// saem iguais aos da leitura inteira, porque a contagem de linhas continua de onde parou.
+    public static func parse(chunk data: Data, fileID: String, state: inout State) -> [UsageRecord] {
         var records: [UsageRecord] = []
-        var model = "codex"
-        var cwd: String?
-        var previous: [String: Int] = [:]
-        var index = 0
         for lineSub in data.split(separator: 0x0A) {
-            index += 1
-            guard let obj = (try? JSONSerialization.jsonObject(with: Data(lineSub))) as? [String: Any] else { continue }
+            state.index += 1
+            guard lineContains(lineSub, anyOf: needles),
+                  let obj = (try? JSONSerialization.jsonObject(with: Data(lineSub))) as? [String: Any] else { continue }
             let item = dict(obj["payload"]) ?? obj
             let kind = (obj["type"] as? String) ?? ""
             let itemType = (item["type"] as? String) ?? kind
 
             if kind == "session_meta" || itemType == "session_meta" {
-                cwd = (item["cwd"] as? String) ?? cwd
+                state.cwd = (item["cwd"] as? String) ?? state.cwd
                 continue
             }
             if kind == "turn_context" || itemType == "turn_context" {
-                cwd = (item["cwd"] as? String) ?? cwd
-                model = (item["model"] as? String) ?? model
+                state.cwd = (item["cwd"] as? String) ?? state.cwd
+                state.model = (item["model"] as? String) ?? state.model
                 continue
             }
             guard itemType == "token_count", let info = dict(item["info"]),
@@ -53,20 +81,21 @@ public enum CodexParser {
 
             let keys = ["input_tokens", "cached_input_tokens", "cache_write_input_tokens", "output_tokens"]
             var delta: [String: Int] = [:]
-            for k in keys { delta[k] = max(int(total[k]) - (previous[k] ?? 0), 0) }
-            for k in keys { previous[k] = max(int(total[k]), previous[k] ?? 0) }
+            for k in keys { delta[k] = max(int(total[k]) - (state.previous[k] ?? 0), 0) }
+            for k in keys { state.previous[k] = max(int(total[k]), state.previous[k] ?? 0) }
             guard delta.values.contains(where: { $0 > 0 }),
                   let ts = date(obj["timestamp"]) ?? date(item["timestamp"]) else { continue }
 
             let cached = delta["cached_input_tokens"] ?? 0
             records.append(UsageRecord(
-                id: "codex:\(fileID):\(index)", tool: Tool.codex, timestamp: ts,
-                project: lastComponent(cwd), model: model,
+                id: "codex:\(fileID):\(state.index)", tool: Tool.codex, timestamp: ts,
+                project: lastComponent(state.cwd), model: state.model,
                 input: max((delta["input_tokens"] ?? 0) - cached, 0), // input_tokens inclui o cache
                 output: delta["output_tokens"] ?? 0,                  // raciocínio já está dentro da saída
                 cacheWrite5m: delta["cache_write_input_tokens"] ?? 0,
                 cacheRead: cached))
         }
+        state.offset += UInt64(data.count)
         return records
     }
 
@@ -79,6 +108,67 @@ public enum CodexParser {
     /// Sessões ativas e arquivadas: as arquivadas também gastaram tokens.
     public static var roots: [URL] {
         [home.appendingPathComponent("sessions"), home.appendingPathComponent("archived_sessions")]
+    }
+}
+
+/// Sessões do Codex, lidas aos poucos: de cada arquivo guarda o estado do leitor e lê só o que foi
+/// acrescentado desde a última vez. Um arquivo que encolheu (reescrito) é relido do começo.
+public final class CodexSource: @unchecked Sendable {
+    struct Entry: Codable { var size: UInt64; var mtime: Double; var state: CodexParser.State; var records: [UsageRecord] }
+
+    let roots: [URL]
+    let cacheURL: URL
+    private var entries: [String: Entry] = [:]
+    private let lock = NSLock()
+
+    public init(roots: [URL] = CodexParser.roots, cacheURL: URL) {
+        self.roots = roots
+        self.cacheURL = cacheURL
+        if let data = try? Data(contentsOf: cacheURL),
+           let saved = try? JSONDecoder().decode([String: Entry].self, from: data) {
+            entries = saved
+        }
+    }
+
+    public func cached() -> [UsageRecord] {
+        lock.lock(); defer { lock.unlock() }
+        return entries.values.flatMap(\.records)
+    }
+
+    public func refresh() -> [UsageRecord] {
+        lock.lock(); defer { lock.unlock() }
+        var changed = false
+        for root in roots {
+            guard let walker = FileManager.default.enumerator(at: root, includingPropertiesForKeys: [.fileSizeKey, .contentModificationDateKey]) else { continue }
+            for case let url as URL in walker where url.pathExtension == "jsonl" {
+                guard let v = try? url.resourceValues(forKeys: [.fileSizeKey, .contentModificationDateKey]),
+                      let sizeInt = v.fileSize else { continue }
+                let size = UInt64(sizeInt)
+                let mtime = v.contentModificationDate?.timeIntervalSince1970 ?? 0
+                var entry = entries[url.path] ?? Entry(size: 0, mtime: 0, state: .init(), records: [])
+                if entries[url.path] != nil, entry.size == size, entry.mtime == mtime { continue }
+                if size < entry.state.offset { entry = Entry(size: 0, mtime: 0, state: .init(), records: []) }
+                guard let handle = try? FileHandle(forReadingFrom: url) else { continue }
+                defer { try? handle.close() }
+                try? handle.seek(toOffset: entry.state.offset)
+                let tail = (try? handle.readToEnd()) ?? Data()
+                // Só até a última quebra de linha: uma linha pela metade fica para a próxima leitura.
+                if let lastNewline = tail.lastIndex(of: 0x0A) {
+                    let chunk = tail[tail.startIndex...lastNewline]
+                    entry.records += CodexParser.parse(chunk: Data(chunk), fileID: url.deletingPathExtension().lastPathComponent,
+                                                       state: &entry.state)
+                }
+                entry.size = size
+                entry.mtime = mtime
+                entries[url.path] = entry
+                changed = true
+            }
+        }
+        if changed, let data = try? JSONEncoder().encode(entries) {
+            try? FileManager.default.createDirectory(at: cacheURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try? data.write(to: cacheURL, options: .atomic)
+        }
+        return entries.values.flatMap(\.records)
     }
 }
 
