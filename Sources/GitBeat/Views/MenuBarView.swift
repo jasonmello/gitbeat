@@ -51,8 +51,10 @@ struct MenuBarView: View {
                     openWindow(id: "main")
                     NSApp.activate()
                 } label: {
-                    Text(T("Open GitBeat", "Abrir o GitBeat")).frame(maxWidth: .infinity)
+                    Text(T("Open GitBeat", "Abrir o GitBeat")).fontWeight(.semibold).frame(maxWidth: .infinity)
                 }
+                .buttonStyle(.borderedProminent)
+                .buttonBorderShape(.capsule)
                 .controlSize(.large)
                 .keyboardShortcut(.defaultAction)
                 Button {

@@ -21,13 +21,13 @@ struct GoalsView: View {
                 Card(title: T("Record", "Recorde"), systemImage: "trophy.fill", tint: Theme.streak) {
                     BigValue(value: Fmt.int(model.longestStreak), unit: Fmt.days(model.longestStreak))
                 }
-                Card(title: T("All three rings closed", "Três anéis fechados"), systemImage: "checkmark.seal.fill", tint: .red,
+                Card(title: T("All three rings closed", "Três anéis fechados"), systemImage: "checkmark.seal.fill", tint: Theme.tokens,
                      trailing: T("30 days", "30 dias")) {
                     BigValue(value: Fmt.int(metAll), unit: Fmt.days(metAll))
                 }
             }
 
-            Card(title: T("Last two weeks", "Últimas duas semanas"), systemImage: "calendar", tint: .red) {
+            Card(title: T("Last two weeks", "Últimas duas semanas"), systemImage: "calendar", tint: Theme.tokens) {
                 let recent = model.days.lastDays(14, endingAt: Date())
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 14) {
                     ForEach(recent, id: \.self) { key in

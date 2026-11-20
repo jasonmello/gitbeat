@@ -333,8 +333,8 @@ struct PageHeader: View {
                 Text(subtitle).eyebrow().foregroundStyle(.secondary)
             }
             Text(title)
-                .font(.system(size: 28, weight: .bold))
-                .tracking(-0.6)
+                .font(.system(size: 30, weight: .heavy))
+                .tracking(-1.0)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.bottom, 2)
