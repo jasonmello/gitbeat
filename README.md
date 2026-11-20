@@ -1,5 +1,7 @@
 # GitBeat
 
+![GitBeat — track AI tokens, coding time and GitHub commits, all in one native Mac app](site/assets/og-cover.jpg)
+
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE) · Name, logo and mascot reserved — see [`NOTICE`](NOTICE)
 
 Your coding rhythm, at a glance: tokens per day (Claude Code, OpenCode, Codex CLI, Gemini CLI), active time, GitHub commits and PRs, goal rings and streaks. A native Mac app with Liquid Glass and a menu bar item. English and Portuguese.
