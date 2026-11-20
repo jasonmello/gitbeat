@@ -26,13 +26,20 @@ jobs:
   segredos:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    permissions:
-      contents: read
-      pull-requests: read # o gitleaks lista os commits do PR; sem isto o GitHub responde 403
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Rodamos o gitleaks direto, varrendo TODO o histórico (gitleaks detect sem
+      # --log-opts percorre todos os commits). A action oficial compara só o
+      # intervalo do push (anterior..novo), e isso quebra depois de um force push,
+      # quando o commit anterior deixa de existir. Varrer tudo é mais robusto e
+      # mais completo.
+      - name: Instalar gitleaks
+        run: |
+          VERSION=8.24.3
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" \
+            | tar -xz -C /usr/local/bin gitleaks
+          gitleaks version
+      - name: Varrer o histórico atrás de segredos
+        run: gitleaks detect --source . --redact -v
