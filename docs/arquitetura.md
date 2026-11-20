@@ -43,6 +43,8 @@ Formatos lidos do código-fonte de cada uma em 2026-11-19 e conferidos com os ar
 - Sem permissão de notificação, o lembrete aparece no ícone da barra de menu: vira uma chama depois do horário do lembrete quando hoje está sem atividade e há sequência (`AppModel.streakAtRisk`).
 
 ## App (`Sources/GitBeat/`)
+- **Duas leituras.** Completa: todas as ferramentas, histórico, caches gravados. Rápida (`refresh(live: true)`): só os arquivos do Claude Code que o `FolderWatcher` (FSEvents) disse que mudaram, no máximo a cada 20 s (`liveRefreshInterval`); Codex, Gemini, OpenCode e o histórico vêm da última completa e nada é gravado. Motivo: um arquivo de sessão do Codex em uso tem dezenas de MB e é relido inteiro; percorrer as ~2 mil sessões do Claude a cada mudança também pesava.
+- O total de hoje alimenta o `MenuBarMascot` a cada leitura; o `ActivityMeter` (núcleo, testado nas checagens) transforma os aumentos dos últimos 3 min em nível de atividade.
 - `AppModel` relê as ferramentas ao abrir, a cada 2 min (`autoRefreshInterval`, timer no modo `.common`), ao acordar o Mac e ao voltar para o app ou abrir o painel da barra de menu, se os dados tiverem mais de 1 min. O GitHub é consultado quando os dados dele têm mais de 10 min, ao acordar e no botão Atualizar. Tudo em `Task.detached`. Migra a pasta antiga `SaudeDev` na primeira abertura.
 - `Preferences`: idioma (padrão inglês), visual (padrão Liquid Glass) e tema, em UserDefaults; `T()` lê o idioma e as telas redesenham ao trocar.
 - Cenas: `Window` principal, `MenuBarExtra`, `Settings` (General + Goals). Painel Sobre com o crédito.

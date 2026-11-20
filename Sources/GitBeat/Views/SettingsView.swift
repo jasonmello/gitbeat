@@ -37,6 +37,9 @@ struct GeneralSettings: View {
             }
             .pickerStyle(.segmented)
 
+            SwiftUI.Section(T("Cost", "Custo")) {
+                CurrencyRows()
+            }
             SwiftUI.Section(T("Startup", "Inicialização")) {
                 LoginItemRow()
             }
@@ -121,5 +124,27 @@ struct NotificationRows: View {
                 denied = await Notifier.shared.authorizationStatus() == .denied
                 Notifier.shared.update(with: model)
             }
+    }
+}
+
+/// Moeda do custo equivalente. Real pede a cotação do dólar, informada pelo usuário.
+struct CurrencyRows: View {
+    var body: some View {
+        @Bindable var prefs = Preferences.shared
+        Picker(T("Show cost in", "Mostrar custo em"), selection: $prefs.currency) {
+            ForEach(CostCurrency.allCases) { Text($0.title).tag($0) }
+        }
+        if prefs.currency == .brl {
+            TextField(T("R$ per US$ 1", "R$ por US$ 1"), value: $prefs.brlPerUSD,
+                      format: .number.precision(.fractionLength(0...4)).locale(Fmt.locale))
+                .multilineTextAlignment(.trailing)
+            Text(prefs.brlPerUSD > 0
+                 ? T("Prices come from the API in dollars and are converted with this rate. Update it when you like; GitBeat doesn't look it up online.",
+                     "Os preços da API são em dólar e são convertidos com esta cotação. Atualize quando quiser; o GitBeat não busca cotação na internet.")
+                 : T("Enter the dollar rate to see costs in reais. Until then, they stay in dollars.",
+                     "Informe a cotação do dólar para ver o custo em reais. Até lá, ele continua em dólar."))
+                .font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }
