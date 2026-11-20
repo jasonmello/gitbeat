@@ -3,7 +3,8 @@
 Valores tirados de `Sources/GitBeat/Theme.swift`, `Sources/GitBeat/Brand.swift` e `Sources/GitBeat/Views/Components.swift`. Mudou lá, mude aqui no mesmo PR.
 
 ## Princípios
-- **Parece o app Saúde.** Cartões com título colorido e ícone, número grande, gráfico embaixo. Anéis para metas.
+- **Painel de atividade.** Cartões com título colorido e ícone, número grande, gráfico embaixo. Anéis para metas.
+- **Marca própria.** Nada de comparar com produtos de outras empresas ("Apple Health", "app Saúde", relógio) em texto, slogan ou código: são marcas registradas. Citar a plataforma para dizer onde o app roda (macOS, iCloud Drive, Xcode) pode.
 - **Número primeiro, explicação em uma linha.** Cada cartão responde uma pergunta ("how much today?").
 - **Honesto.** Custo é "equivalent at API prices"; o que é estimativa diz que é. A página About the data explica cada diferença que o usuário pode notar.
 - **Nativo.** Liquid Glass do sistema como visual oficial; Clássico como alternativa e como fallback antes do macOS 26.
@@ -46,6 +47,12 @@ Neutros quentes, nunca preto/branco puros: página `Theme.page` (#f5f5f3 / #0e0e
 
 ## Estados
 Carregando: `LoadingPage` com skeleton e brilho. Vazio: `EmptyPage`/`EmptyNote`. Erro do GitHub: cartão laranja com o texto selecionável e "mostrando os últimos dados salvos".
+
+## Site (`site/index.html`)
+- Mesma marca e cores dos assuntos; tokens no `:root` do arquivo. Escuro é o padrão; claro e escuro seguem o sistema, com botão para trocar. Inglês original, botão PT.
+- No tema claro, texto em verde usa `--accent-text` (#00825f), porque o verde da marca não tem contraste em fundo claro; botões e gráficos mantêm o #00C995.
+- Imagens só de telas sem dados privados (Resumo, Tempo, Metas). Nada de nomes de repositório, títulos de PR ou projetos.
+- Movimento: linha de batimento desenhada no topo, anéis fechando e barras subindo ao entrar na tela; tudo desliga com "reduzir movimento".
 
 ## Voz e conteúdo
 - Inglês original, português como opção, sempre lado a lado em `T("…", "…")`.
