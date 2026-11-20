@@ -27,11 +27,7 @@ struct GitBeatApp: App {
                 .environment(model)
                 .preferredColorScheme(prefs.mode.colorScheme)
         } label: {
-            HStack(spacing: 4) {
-                Image(systemName: model.streakAtRisk ? "flame.fill" : "waveform.path.ecg")
-                Text(Fmt.tokens(model.tokens(on: model.todayKey).total))
-            }
-            .help(model.streakAtRisk ? T("Your streak ends today", "Sua sequência termina hoje") : Brand.name)
+            MenuBarLabel(model: model, mascot: model.menuMascot)
         }
         .menuBarExtraStyle(.window)
 
@@ -46,10 +42,6 @@ struct GitBeatApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         let args = CommandLine.arguments
-        if let i = args.firstIndex(of: "--render-icon"), i + 1 < args.count {
-            Task { @MainActor in Snapshot.renderIcon(to: URL(fileURLWithPath: args[i + 1])) }
-            return
-        }
         if let i = args.firstIndex(of: "--snapshot"), i + 1 < args.count {
             Task { @MainActor in await Snapshot.run(to: URL(fileURLWithPath: args[i + 1])) }
             return
@@ -89,5 +81,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         credits.addAttribute(.paragraphStyle, value: centered, range: NSRange(location: 0, length: credits.length))
         NSApp.orderFrontStandardAboutPanel(options: [.credits: credits, .applicationName: Brand.name])
         NSApp.activate()
+    }
+}
+
+/// O ícone da barra de menu numa view própria: cada troca de quadro do mascote redesenha só
+/// isto, não o corpo do app inteiro (janela, barra e ajustes).
+struct MenuBarLabel: View {
+    let model: AppModel
+    let mascot: MenuBarMascot
+
+    var body: some View {
+        HStack(spacing: 4) {
+            if model.streakAtRisk {
+                Image(systemName: "flame.fill")
+            } else {
+                MascotFrame(mascot: mascot)
+            }
+            Text(Fmt.tokens(model.tokens(on: model.todayKey).total))
+        }
+        .help(model.streakAtRisk ? T("Your streak ends today", "Sua sequência termina hoje") : Brand.name)
+    }
+}
+
+/// Só a imagem do mascote: é a única coisa que muda a cada quadro.
+private struct MascotFrame: View {
+    let mascot: MenuBarMascot
+
+    var body: some View {
+        Image(nsImage: mascot.image)
+            .accessibilityLabel("GitBeat, " + mascot.description)
     }
 }

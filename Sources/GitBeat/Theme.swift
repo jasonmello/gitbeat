@@ -6,7 +6,8 @@ enum Theme {
     // MARK: cores dos assuntos (cores de dado, uma por assunto, usadas também nos anéis)
     static let tokens = Color.pink
     static let time = Color.teal
-    static let github = Brand.green
+    /// Verde dos commits (era o verde da marca antiga; ficou como cor de dado).
+    static let github = Color(red: 0, green: 0.788, blue: 0.584)   // #00C995
     static let cost = Color.purple
     static let streak = Color.orange
 
@@ -224,8 +225,15 @@ enum Fmt {
         }
     }
 
-    static func money(_ value: Double) -> String {
-        value.formatted(.currency(code: "USD").precision(.fractionLength(value >= 1000 ? 0 : 2)).locale(locale))
+    /// Ícone do custo: cifrão ou real, conforme a moeda escolhida.
+    static var costSymbol: String { Preferences.shared.showsBRL ? "brazilianrealsign.circle.fill" : "dollarsign.circle.fill" }
+
+    /// Recebe o valor em dólar (preço da API) e mostra na moeda escolhida nos Ajustes.
+    /// en: $277.45 / R$1,520.10 · pt: US$ 277,45 / R$ 1.520,10.
+    static func money(_ usd: Double) -> String {
+        let prefs = Preferences.shared
+        let (value, code) = prefs.showsBRL ? (usd * prefs.brlPerUSD, "BRL") : (usd, "USD")
+        return value.formatted(.currency(code: code).precision(.fractionLength(value >= 1000 ? 0 : 2)).locale(locale))
     }
 
     /// en: 4h 06m · pt: 4h 06min.

@@ -50,7 +50,7 @@ struct RootView: View {
                 SwiftUI.Section { row(.about) }
             }
             .safeAreaInset(edge: .top) {
-                BrandLogo(height: 26)
+                BrandLogo(height: 32)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 18)
                     .padding(.vertical, 8)
@@ -112,7 +112,7 @@ struct CreditLine: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            Image(systemName: "heart.fill").foregroundStyle(Brand.green)
+            Image(systemName: "heart.fill").foregroundStyle(Brand.accent)
             Text(T("Proudly developed by", "Orgulhosamente desenvolvido por"))
             Link(destination: Brand.authorURL) {
                 Text(Brand.author)

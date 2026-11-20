@@ -13,7 +13,10 @@ struct SummaryView: View {
         let week = model.dayKeys(.week)
 
         VStack(alignment: .leading, spacing: Theme.gap) {
-            PageHeader(title: T("Summary", "Resumo"), subtitle: Fmt.longDay(Date()))
+            HStack(alignment: .bottom) {
+                PageHeader(title: T("Summary", "Resumo"), subtitle: Fmt.longDay(Date()))
+                SummaryMascot()
+            }
 
             HStack(alignment: .top, spacing: Theme.gap) {
                 Card(title: T("Today's rings", "Anéis de hoje"), systemImage: "circle.circle", tint: .red,
@@ -55,7 +58,7 @@ struct SummaryView: View {
                                       "\(model.prsMergedSum(week)) PRs mesclados nos últimos 7 dias"),
                             points: model.series(.week) { Double(model.commitSum($0)) })
 
-                Card(title: T("Equivalent cost", "Custo equivalente"), systemImage: "dollarsign.circle.fill",
+                Card(title: T("Equivalent cost", "Custo equivalente"), systemImage: Fmt.costSymbol,
                      tint: Theme.cost, trailing: T("Today", "Hoje"), action: { selection = .tokens }) {
                     BigValue(value: Fmt.money(tokens.cost))
                     Text(T("\(Fmt.money(model.tokenSum(model.dayKeys(.month)).cost)) in the last 30 days, at API prices",
@@ -205,5 +208,23 @@ struct MiniBars: View {
             }
         }
         .frame(height: 60)
+    }
+}
+
+/// O mascote no topo do Resumo: dá boas-vindas ao abrir o app e depois segue o humor do dia.
+struct SummaryMascot: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        let mood = model.hasGreeted ? model.mascotMood : .greeting
+        MascotView(mood: mood, size: 92)
+            .padding(.bottom, -6)
+            .task(id: mood) {
+                // Gestos de uma vez: quando terminam, o mascote volta ao humor do momento.
+                guard mood == .greeting || mood == .success else { return }
+                try? await Task.sleep(nanoseconds: 1_600_000_000)
+                guard !Task.isCancelled else { return }
+                if mood == .greeting { model.hasGreeted = true } else { model.celebratedDay = model.todayKey }
+            }
     }
 }

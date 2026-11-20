@@ -14,7 +14,7 @@ struct MenuBarView: View {
 
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .firstTextBaseline) {
-                BrandLogo(height: 18)
+                BrandLogo(height: 24)
                 Spacer()
                 Text(Fmt.day(Date())).font(.subheadline).foregroundStyle(.secondary)
             }
@@ -39,7 +39,7 @@ struct MenuBarView: View {
                 chip(systemImage: "flame.fill", tint: Theme.streak,
                      text: "\(model.currentStreak) \(Fmt.days(model.currentStreak))",
                      detail: model.streakAtRisk ? T("ends today", "termina hoje") : nil)
-                chip(systemImage: "dollarsign.circle.fill", tint: Theme.cost,
+                chip(systemImage: Fmt.costSymbol, tint: Theme.cost,
                      text: Fmt.money(tokens.cost), detail: nil)
                     .help(T("Equivalent cost today, at API prices", "Custo equivalente de hoje, a preço da API"))
             }

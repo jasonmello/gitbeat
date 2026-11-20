@@ -33,6 +33,10 @@ final class AppModel {
         return Tool.all.filter { paths[$0].map { fm.fileExists(atPath: $0.path) } ?? false }
     }
     private(set) var recordCount = 0
+    /// Momento da resposta mais recente de qualquer ferramenta (decide o humor do mascote).
+    private(set) var lastActivity: Date?
+    /// O mascote animado do ícone da barra de menu.
+    let menuMascot = MenuBarMascot()
 
     // GitHub
     private(set) var github: GitHubSnapshot?
@@ -42,7 +46,11 @@ final class AppModel {
     private(set) var lastUpdated: Date?
 
     var goals: Goals {
-        didSet { saveGoals() }
+        didSet {
+            saveGoals()
+            // Editar a meta não é conquista: o estado dos anéis passa a valer como já visto.
+            ringsClosedSeen = ringsClosedToday
+        }
     }
 
     let days = DayKeys()
@@ -54,6 +62,14 @@ final class AppModel {
     private let githubCacheURL: URL
     private var timer: Timer?
     private var wakeObserver: NSObjectProtocol?
+    private var folderWatcher: FolderWatcher?
+    private var lastLocalRefresh = Date.distantPast
+    private var pendingLiveRefresh = false
+    /// Arquivos do Claude Code que mudaram desde a última releitura rápida.
+    private var changedClaudeFiles = Set<String>()
+    /// Da última leitura completa, reaproveitados nas releituras rápidas.
+    private var storedHistory: (own: [UsageRecord], others: [UsageRecord])?
+    private var openCodeRecords: [UsageRecord] = []
     private let notifies: Bool
     private static let goalsKey = "goals"
     /// De quanto em quanto tempo o app relê as ferramentas sozinho. A leitura é incremental
@@ -61,6 +77,8 @@ final class AppModel {
     static let autoRefreshInterval: TimeInterval = 2 * 60
     /// Idade máxima dos dados do GitHub antes de consultar de novo (2 consultas ao `gh` por vez).
     private static let githubMaxAge: TimeInterval = 10 * 60
+    /// Com atividade nas pastas das ferramentas, relê no máximo a cada tantos segundos.
+    private static let liveRefreshInterval: TimeInterval = 20
     /// Ao abrir a janela ou o painel da barra de menu, atualiza se os dados forem mais velhos que isto.
     private static let staleOnOpen: TimeInterval = 60
 
@@ -115,6 +133,31 @@ final class AppModel {
         ) { [weak self] _ in
             Task { @MainActor in await self?.refresh(forceGitHub: true) }
         }
+        // Relê logo depois que uma ferramenta grava (para o mascote da barra acompanhar o ritmo).
+        let folders = [UsageStore.defaultRoot, GeminiParser.root, OpenCodeReader.dataDir] + CodexParser.roots
+        let claudeRoot = UsageStore.defaultRoot.standardizedFileURL.path + "/"
+        folderWatcher = FolderWatcher(paths: folders.map(\.path)) { [weak self] paths in
+            // Só logs do Claude Code entram na releitura rápida (leitura incremental, barata).
+            // Codex, Gemini e OpenCode são relidos inteiros, então ficam para a leitura completa de 2 min.
+            let claudeFiles = paths.filter { $0.hasPrefix(claudeRoot) && $0.hasSuffix(".jsonl") }
+            guard !claudeFiles.isEmpty else { return }
+            Task { @MainActor in
+                self?.changedClaudeFiles.formUnion(claudeFiles)
+                self?.scheduleLiveRefresh()
+            }
+        }
+    }
+
+    /// Junta várias gravações seguidas numa releitura só, no máximo a cada `liveRefreshInterval`.
+    private func scheduleLiveRefresh() {
+        guard !pendingLiveRefresh else { return }
+        pendingLiveRefresh = true
+        let wait = max(0, Self.liveRefreshInterval - Date().timeIntervalSince(lastLocalRefresh))
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: UInt64(wait * 1_000_000_000))
+            pendingLiveRefresh = false
+            await refresh(live: true)
+        }
     }
 
     /// Chamado quando a janela ou o painel da barra de menu aparecem.
@@ -158,21 +201,34 @@ final class AppModel {
         var firstDay: String?
         var toolsFound: [String]
         var recordCount: Int
+        var lastActivity: Date?
+        var stored: (own: [UsageRecord], others: [UsageRecord])
+        var openCode: [UsageRecord]
     }
 
-    func refresh(forceGitHub: Bool = false) async {
+    /// Leitura completa (abrir, timer de 2 min, acordar, botão): todas as ferramentas, histórico, caches
+    /// gravados em disco. Com `live`, releitura rápida depois de uma gravação: só o que o Claude Code
+    /// acrescentou (leitura incremental), o resto vem da última leitura completa e nada é gravado.
+    func refresh(forceGitHub: Bool = false, live: Bool = false) async {
         guard !isLoading else { return }
         isLoading = true
         defer { isLoading = false }
 
         let (claude, codex, gemini, archive, days) = (self.claude, self.codex, self.gemini, self.archive, self.days)
+        let full = !live || storedHistory == nil
+        let (cachedHistory, cachedOpenCode) = (storedHistory, openCodeRecords)
+        let onlyFiles: [URL]? = full ? nil : changedClaudeFiles.map { URL(fileURLWithPath: $0) }
+        changedClaudeFiles.removeAll()
+        lastLocalRefresh = Date()
         let computed = await Task.detached(priority: .userInitiated) { () -> Computed in
-            let fromTools = claude.refresh() + OpenCodeReader.read() + codex.refresh() + gemini.refresh()
-            let stored = archive.load()
+            let openCode = full ? OpenCodeReader.read() : cachedOpenCode
+            let fromTools = claude.refresh(persist: full, only: onlyFiles) + openCode
+                + (full ? codex.refresh() : codex.cached()) + (full ? gemini.refresh() : gemini.cached())
+            let stored = full ? archive.load() : cachedHistory!
             // Os deste Mac (ferramentas + o que já estava guardado) voltam para o histórico;
             // os de outros Macs só entram na conta.
             let own = UsageStore.dedupe(fromTools + stored.own)
-            archive.save(own, days: days)
+            if full { archive.save(own, days: days) }
             let records = UsageStore.dedupe(own + stored.others)
 
             let stamps = records.map(\.timestamp)
@@ -186,7 +242,10 @@ final class AppModel {
                 responsesByHour: SessionTime.responsesByHour(stamps.filter { $0 >= monthAgo }, calendar: days.calendar),
                 firstDay: records.first.map { days.key($0.timestamp) },
                 toolsFound: Tool.all.filter { t in records.contains { $0.tool == t } },
-                recordCount: records.count
+                recordCount: records.count,
+                lastActivity: stamps.max(),
+                stored: stored,
+                openCode: openCode
             )
         }.value
 
@@ -199,10 +258,15 @@ final class AppModel {
         firstDay = computed.firstDay
         toolsFound = computed.toolsFound
         recordCount = computed.recordCount
+        lastActivity = computed.lastActivity
+        storedHistory = computed.stored
+        openCodeRecords = computed.openCode
+        if notifies { menuMascot.update(totalTokens: tokens(on: todayKey).total) }
 
         let stale = github.map { Date().timeIntervalSince($0.fetchedAt) > Self.githubMaxAge } ?? true
         if forceGitHub || stale { await refreshGitHub() }
         lastUpdated = Date()
+        noteRings()
         if notifies { Notifier.shared.update(with: self) }
     }
 
@@ -248,6 +312,39 @@ final class AppModel {
     // MARK: números do dia
 
     var todayKey: String { days.key(Date()) }
+
+    // MARK: mascote
+
+    /// Boas-vindas só na primeira vez que o Resumo aparece depois de abrir o app.
+    var hasGreeted = false
+    /// Dia em que a comemoração dos anéis já tocou (toca uma vez por dia, não a cada visita).
+    var celebratedDay: String?
+    /// Dia em que os anéis PASSARAM de incompletos para completos com o app aberto. Já estar
+    /// completo na primeira leitura, ou completar editando a meta, não conta.
+    private(set) var ringsClosedOn: String?
+    private var ringsClosedSeen: Bool?
+
+    var ringsClosedToday: Bool {
+        let r = rings(on: todayKey)
+        return r.tokens >= 1 && r.hours >= 1 && r.commits >= 1
+    }
+
+    private func noteRings() {
+        let closed = ringsClosedToday
+        if ringsClosedSeen == false, closed { ringsClosedOn = todayKey }
+        ringsClosedSeen = closed
+    }
+
+    /// Humor do mascote: comemora os anéis fechados, acompanha quando você está programando,
+    /// descansa quando parou há um tempo. Pausa é descanso, nunca cobrança.
+    var mascotMood: MascotMood {
+        if ringsClosedOn == todayKey, celebratedDay != todayKey { return .success }
+        guard let lastActivity else { return .rest }
+        let quiet = Date().timeIntervalSince(lastActivity)
+        if quiet < 15 * 60 { return .focus }
+        if quiet > 2 * 3600 { return .rest }
+        return .idle
+    }
 
     /// Ainda não terminou a primeira leitura do histórico.
     var isFirstLoad: Bool { firstDay == nil && (isLoading || lastUpdated == nil) }

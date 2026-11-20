@@ -37,6 +37,14 @@ enum ThemeMode: String, CaseIterable, Identifiable {
     }
 }
 
+/// Moeda em que o custo equivalente aparece. Os preços da API são em dólar; o real usa a cotação
+/// que o usuário informa nos Ajustes (o app não busca cotação na internet).
+enum CostCurrency: String, CaseIterable, Identifiable {
+    case usd, brl
+    var id: String { rawValue }
+    var title: String { self == .usd ? T("US dollar (US$)", "Dólar (US$)") : T("Brazilian real (R$)", "Real (R$)") }
+}
+
 /// Preferências de aparência e idioma, guardadas em UserDefaults.
 /// Como é `@Observable`, qualquer tela que chame `T(...)` redesenha ao trocar o idioma.
 @Observable
@@ -50,6 +58,12 @@ final class Preferences {
     var notifyStreak: Bool { didSet { UserDefaults.standard.set(notifyStreak, forKey: "notifyStreak") } }
     /// Hora do lembrete de sequência (0–23).
     var reminderHour: Int { didSet { UserDefaults.standard.set(reminderHour, forKey: "reminderHour") } }
+    var currency: CostCurrency { didSet { UserDefaults.standard.set(currency.rawValue, forKey: "currency") } }
+    /// Quantos reais vale 1 dólar, informado pelo usuário. Zero = ainda não informado.
+    var brlPerUSD: Double { didSet { UserDefaults.standard.set(brlPerUSD, forKey: "brlPerUSD") } }
+
+    /// O real só vale com cotação informada; sem ela, o custo continua em dólar.
+    var showsBRL: Bool { currency == .brl && brlPerUSD > 0 }
 
     init() {
         let d = UserDefaults.standard
@@ -59,6 +73,8 @@ final class Preferences {
         notifyRings = d.object(forKey: "notifyRings") as? Bool ?? true
         notifyStreak = d.object(forKey: "notifyStreak") as? Bool ?? true
         reminderHour = d.object(forKey: "reminderHour") as? Int ?? 21
+        currency = d.string(forKey: "currency").flatMap(CostCurrency.init) ?? .usd
+        brlPerUSD = d.double(forKey: "brlPerUSD")
     }
 
     /// Liquid Glass só existe a partir do macOS 26.
