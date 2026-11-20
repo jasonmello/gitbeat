@@ -48,6 +48,8 @@ enum Snapshot {
 
     private static func framed(_ view: some View, model: AppModel, scheme: ColorScheme, width: CGFloat) -> some View {
         view
+            .foregroundStyle(Theme.ink)   // como nas cenas do app
+            .tint(Brand.violet)
             .environment(model)
             .padding(24)
             .frame(width: width)
