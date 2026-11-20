@@ -33,7 +33,7 @@ Formatos lidos do código-fonte de cada uma em 2026-11-19 e conferidos com os ar
 - Custo: `costUSD` gravado pela ferramenta ou tabela de preços da Anthropic; modo rápido 2×. Modelos fora da tabela contam zero.
 
 ## GitHub (`Sources/GitBeatCore/GitHub.swift`)
-- Pelo `gh` (procurado em `~/.local/bin`, `/opt/homebrew/bin`, `/usr/local/bin`). Commits pelo histórico do branch principal de cada repositório (inclui privados), até 100 por repositório no ano. PRs pela busca, até 1.000. Cache `github-v2.json`, relido após 30 min ou no Refresh.
+- Pelo `gh` (procurado em `~/.local/bin`, `/opt/homebrew/bin`, `/usr/local/bin`). Commits pelo histórico do branch principal de cada repositório (inclui privados), até 100 por repositório no ano. PRs pela busca, até 1.000. Cache `github-v2.json`, relido após 10 min, ao acordar o Mac ou no Refresh.
 
 ## Abrir no login e notificações (`Sources/GitBeat/SystemIntegration.swift`, `Sources/GitBeatCore/NotificationPlanner.swift`)
 - Só funcionam como `.app` (com bundle identifier); por `swift run` ficam desligados.
@@ -43,7 +43,7 @@ Formatos lidos do código-fonte de cada uma em 2026-11-19 e conferidos com os ar
 - Sem permissão de notificação, o lembrete aparece no ícone da barra de menu: vira uma chama depois do horário do lembrete quando hoje está sem atividade e há sequência (`AppModel.streakAtRisk`).
 
 ## App (`Sources/GitBeat/`)
-- `AppModel` relê tudo ao abrir e a cada 10 min, em `Task.detached`. Migra a pasta antiga `SaudeDev` na primeira abertura.
+- `AppModel` relê as ferramentas ao abrir, a cada 2 min (`autoRefreshInterval`, timer no modo `.common`), ao acordar o Mac e ao voltar para o app ou abrir o painel da barra de menu, se os dados tiverem mais de 1 min. O GitHub é consultado quando os dados dele têm mais de 10 min, ao acordar e no botão Atualizar. Tudo em `Task.detached`. Migra a pasta antiga `SaudeDev` na primeira abertura.
 - `Preferences`: idioma (padrão inglês), visual (padrão Liquid Glass) e tema, em UserDefaults; `T()` lê o idioma e as telas redesenham ao trocar.
 - Cenas: `Window` principal, `MenuBarExtra`, `Settings` (General + Goals). Painel Sobre com o crédito.
 - `Sources/GitBeat/Snapshot.swift`: `--snapshot` desenha as telas com `ImageRenderer` (desenha o vidro; controles nativos saem como faixas amarelas) e `--render-icon` gera o ícone.

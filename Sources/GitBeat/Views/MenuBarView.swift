@@ -64,6 +64,7 @@ struct MenuBarView: View {
         }
         .padding(16)
         .frame(width: 300)
+        .onAppear { model.refreshIfStale() }
     }
 
     private func row(_ title: String, _ value: String, _ color: Color) -> some View {
