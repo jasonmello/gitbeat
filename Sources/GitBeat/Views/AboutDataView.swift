@@ -52,10 +52,13 @@ struct AboutDataView: View {
             }
 
             HStack(alignment: .top, spacing: Theme.gap) {
-                Card(title: T("Cost", "Custo"), systemImage: "dollarsign.circle.fill", tint: Theme.cost) {
+                Card(title: T("Cost", "Custo"), systemImage: Fmt.costSymbol, tint: Theme.cost) {
                     Paragraph(T("What the same usage would cost at Anthropic API list prices (OpenCode records its own cost). On a Pro or Max subscription you don't pay per token.",
                            "Quanto o mesmo uso custaria a preço de API da Anthropic (o OpenCode grava o próprio custo). Na assinatura Pro ou Max você não paga por token."))
                         .font(.callout)
+                    Paragraph(T("Prices are in dollars. To see reais, choose the currency in Settings and enter the dollar rate you want to use.",
+                                "Os preços são em dólar. Para ver em reais, escolha a moeda nos Ajustes e informe a cotação do dólar que quiser usar."))
+                        .font(.callout).foregroundStyle(.secondary)
                 }
                 Card(title: T("Active time", "Tempo ativo"), systemImage: "clock.fill", tint: Theme.time) {
                     Paragraph(T("Gaps of up to 15 minutes between replies count as active. Longer breaks don't, and parallel sessions count once.",
@@ -82,7 +85,7 @@ struct AboutDataView: View {
             : T("Not found", "Não encontrado")
         return HStack(spacing: 8) {
             Image(systemName: found ? "checkmark.circle.fill" : "circle.dashed")
-                .foregroundStyle(found ? AnyShapeStyle(Brand.green) : AnyShapeStyle(.tertiary))
+                .foregroundStyle(found ? AnyShapeStyle(Theme.github) : AnyShapeStyle(.tertiary))
             Text(Tool.displayName(tool)).fontWeight(.medium)
             Text(path).font(.system(.caption, design: .monospaced)).foregroundStyle(.secondary)
             Spacer()

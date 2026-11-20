@@ -11,8 +11,13 @@ Valores tirados de `Sources/GitBeat/Theme.swift`, `Sources/GitBeat/Brand.swift` 
 - **Cor nos dados, não no fundo.** A cor do assunto vai no anel, na barra, no título do cartão e no pontinho da legenda. Rótulos de apoio, setas e "Today" ficam em cinza.
 
 ## Marca
-- Nome: **GitBeat**. Verde da marca `Brand.green` = #00C995. Nome do logo em #1C2025 (claro) e #ECEDEE (escuro), via `BrandLogo`.
-- Logo no topo da barra lateral e no menu da barra; ícone do app gerado de `AppIconArt` (fundo branco arredondado, marca verde).
+- Nome: **GitBeat**. A marca é o **mascote**: um cursor creme (#FFF8E8 → sombra lilás #C9A6EB), rosto ameixa (#42175F), bochechas pêssego, pés lilás e uma sola limão (#CBF85A). Kit em `brand/mascot/` (leia `brand/mascot/KIT-README.md` e `brand/mascot/KIT-V3-README.md`); o logo G anterior está em `archive/brand-g/`.
+- Ícone do app: placa roxa (#7634FF → #3810CD) com o mascote, vindo pronto do kit (`Resources/AppIcon.icns`). Não redesenhar nem pôr outra moldura por cima.
+- Logo = mascote + nome. Nome ameixa no claro (`Resources/logo-on-light.svg`), branco no escuro (`Resources/logo-on-dark.svg`), via `BrandLogo`: 32pt na barra lateral, 24pt no painel da barra de menu.
+- Cores da marca (`Brand.violet`, `Brand.violetDeep`, `Brand.lime`, `Brand.plum`). Destaque em texto e ícones pequenos (`Brand.accent`): roxo #5920F5 no claro, limão no escuro, porque o limão não tem contraste em fundo claro.
+- Preservar a silhueta, o rosto inclinado e a sola limão. Nada de acessórios ou símbolos de código no personagem.
+- **Mascote na janela** (`MascotView`, 24 fps, quadros de `Resources/Mascot/`): no topo do Resumo (`SummaryMascot`, 92pt), na tela de carregamento (idle) e na vazia (curious, parado). Humor em `AppModel.mascotMood`: boas-vindas uma vez ao abrir; comemoração uma vez por dia, só quando os anéis *passam* a fechar com o app aberto (não na primeira leitura nem ao editar meta); foco com atividade nos últimos 15 min; pausa depois de 2 h parado (descanso, nunca cobrança); senão, por perto. Para quando a janela não está ativa; "Reduzir movimento" mostra a pose parada.
+- **Mascote na barra de menu** (`MenuBarMascot`, kit v3, 12 fps, 18pt, template do AppKit em preto com recortes): o número mostra o total de hoje e não se mexe; o movimento mostra o ritmo recente (`ActivityMeter`, janela de 3 min): quietinho, fluindo, ocupado, pico. Mais tokens não é conquista. Vira chama quando a sequência está em risco.
 - Crédito: "Proudly developed by Jason Mello" (`CreditLine`), no rodapé da barra lateral, nos Ajustes, em About the data e no painel Sobre. **O nome é sempre um link para https://github.com/jasonmello** (`Brand.authorURL`), também no site e no README. No app: semibold na cor do texto, sublinha e mostra a mãozinha no hover.
 
 ## Cores (uma por assunto, usadas em tudo daquele assunto)
@@ -20,7 +25,7 @@ Valores tirados de `Sources/GitBeat/Theme.swift`, `Sources/GitBeat/Brand.swift` 
 |---|---|---|
 | Tokens | `Theme.tokens` = rosa | anel externo, gráficos de tokens |
 | Tempo | `Theme.time` = teal | anel do meio, tela Time |
-| GitHub | `Theme.github` = verde da marca | anel interno, commits, quadriculado |
+| GitHub | `Theme.github` = verde #00C995 (cor de dado, não é mais a cor da marca) | anel interno, commits, quadriculado |
 | Custo | `Theme.cost` = roxo | custo equivalente, "by model" |
 | Sequência | `Theme.streak` = laranja | chama, recorde, metas |
 
@@ -55,7 +60,7 @@ Carregando: `LoadingPage` com skeleton e brilho. Vazio: `EmptyPage`/`EmptyNote`.
 
 ## Site (`site/index.html`)
 - Mesma marca e cores dos assuntos; tokens no `:root` do arquivo. Escuro é o padrão; claro e escuro seguem o sistema, com botão para trocar. Inglês original, botão PT.
-- No tema claro, texto em verde usa `--accent-text` (#00825f), porque o verde da marca não tem contraste em fundo claro; botões e gráficos mantêm o #00C995.
+- Marca no site: `--brand` é limão no escuro (botão com texto `--on-brand` roxo-escuro) e roxo no claro (texto branco); `--accent-text` segue a mesma regra. `--mint` ficou só para dados de commits. Logo do cabeçalho em SVG (branco no escuro, escuro no claro); favicon é o símbolo.
 - Imagens só de telas sem dados privados (Resumo, Tempo, Metas). Nada de nomes de repositório, títulos de PR ou projetos.
 - Movimento: linha de batimento desenhada no topo, anéis fechando e barras subindo ao entrar na tela; tudo desliga com "reduzir movimento".
 

@@ -36,16 +36,8 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/GitBeat"
 
-# Ícone: o próprio app desenha a marca (brand/) em 1024×1024 → .iconset → .icns
-TMP=$(mktemp -d)
-"$BIN" --render-icon "$TMP/icon.png"
-mkdir "$TMP/AppIcon.iconset"
-for s in 16 32 128 256 512; do
-  sips -z $s $s "$TMP/icon.png" --out "$TMP/AppIcon.iconset/icon_${s}x${s}.png" >/dev/null
-  sips -z $((s*2)) $((s*2)) "$TMP/icon.png" --out "$TMP/AppIcon.iconset/icon_${s}x${s}@2x.png" >/dev/null
-done
-iconutil -c icns "$TMP/AppIcon.iconset" -o "$APP/Contents/Resources/AppIcon.icns"
-rm -rf "$TMP"
+# Recursos da marca (ícone do kit do mascote, logos, barra de menu, animações): Resources/ → Contents/Resources
+cp -R Resources/. "$APP/Contents/Resources/"
 
 VERSION=$(git describe --tags --always 2>/dev/null || echo "0.1.0")
 cat > "$APP/Contents/Info.plist" <<PLIST

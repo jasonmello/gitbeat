@@ -1,0 +1,46 @@
+{
+  "fps": 24,
+  "frameSize": [
+    256,
+    256
+  ],
+  "states": {
+    "idle": {
+      "frames": 96,
+      "durationSeconds": 4.0,
+      "loop": true,
+      "framesDirectory": "macOS/GitBeatAnimations/idle",
+      "sprite": "sprites/idle.png"
+    },
+    "focus": {
+      "frames": 58,
+      "durationSeconds": 2.4166666666666665,
+      "loop": true,
+      "framesDirectory": "macOS/GitBeatAnimations/focus",
+      "sprite": "sprites/focus.png"
+    },
+    "success": {
+      "frames": 30,
+      "durationSeconds": 1.25,
+      "loop": false,
+      "framesDirectory": "macOS/GitBeatAnimations/success",
+      "sprite": "sprites/success.png"
+    },
+    "rest": {
+      "frames": 144,
+      "durationSeconds": 6.0,
+      "loop": true,
+      "framesDirectory": "macOS/GitBeatAnimations/rest",
+      "sprite": "sprites/rest.png"
+    },
+    "greeting": {
+      "frames": 30,
+      "durationSeconds": 1.25,
+      "loop": false,
+      "framesDirectory": "macOS/GitBeatAnimations/greeting",
+      "sprite": "sprites/greeting.png"
+    }
+  },
+  "coordinateSystem": "PNG top-left; sprite frames arranged left to right",
+  "reducedMotion": "Use static png/<state>-256.png; stop frame scheduling when hidden."
+}

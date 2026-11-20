@@ -1,0 +1,45 @@
+{
+  "version": 3,
+  "fps": 12,
+  "defaultPointSize": 18,
+  "alternatePointSize": 20,
+  "template": true,
+  "format": "RGBA black artwork, transparent eyes and mouth; mark NSImage as template",
+  "states": {
+    "idle": {
+      "frames": 96,
+      "durationSeconds": 8.0,
+      "loop": true,
+      "pattern": "%03d@2x.png",
+      "description": "Quieto, com olhadinha e piscada ocasional"
+    },
+    "flowing": {
+      "frames": 72,
+      "durationSeconds": 6.0,
+      "loop": true,
+      "pattern": "%03d@2x.png",
+      "description": "Olha para o trabalho e alterna os pezinhos"
+    },
+    "busy": {
+      "frames": 36,
+      "durationSeconds": 3.0,
+      "loop": true,
+      "pattern": "%03d@2x.png",
+      "description": "Passinhos mais r\u00e1pidos, corpo acompanhando o ritmo"
+    },
+    "burst": {
+      "frames": 36,
+      "durationSeconds": 3.0,
+      "loop": true,
+      "pattern": "%03d@2x.png",
+      "description": "Dois pequenos saltos, aterrissagem macia e intervalo"
+    },
+    "paused": {
+      "frames": 1,
+      "durationSeconds": 0.08333333333333333,
+      "loop": false,
+      "pattern": "%03d@2x.png",
+      "description": "Olhos fechados, sem movimento"
+    }
+  }
+}

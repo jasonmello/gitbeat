@@ -4,7 +4,6 @@ import GitBeatCore
 
 /// Modos de linha de comando para conferir a interface sem gravar a tela:
 /// - `GitBeat --snapshot <pasta>`: cada tela em PNG, claro e escuro, inglês e português.
-/// - `GitBeat --render-icon <arquivo.png>`: o ícone do app em 1024×1024 (usado por scripts/build-app.sh).
 @MainActor
 enum Snapshot {
     static func run(to dir: URL) async {
@@ -32,13 +31,6 @@ enum Snapshot {
         render(MenuBarView(), model: model, scheme: .dark, width: 300, to: dir.appendingPathComponent("menu.png"))
         (prefs.language, prefs.style) = original
         print("Snapshots in \(dir.path)")
-        exit(0)
-    }
-
-    static func renderIcon(to url: URL) {
-        let renderer = ImageRenderer(content: AppIconArt())
-        renderer.scale = 1
-        write(renderer.nsImage, to: url)
         exit(0)
     }
 

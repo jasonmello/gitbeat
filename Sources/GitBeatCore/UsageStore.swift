@@ -62,6 +62,9 @@ public final class UsageStore: @unchecked Sendable {
     public let cacheURL: URL
     private var files: [String: FileState] = [:]
     private let lock = NSLock()
+    private var dirty = false
+    /// O último resultado de `refresh`, devolvido direto quando nenhum arquivo mudou.
+    private var lastResult: [UsageRecord]?
 
     public static var defaultRoot: URL {
         FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude/projects")
@@ -78,13 +81,21 @@ public final class UsageStore: @unchecked Sendable {
     }
 
     /// Relê o que mudou e devolve todos os registros, sem repetição, em ordem de tempo.
-    public func refresh() -> [UsageRecord] {
+    /// Com `persist: false` não regrava o cache em disco (releituras rápidas; a completa grava).
+    /// Com `only`, olha só esses arquivos (os que o FSEvents disse que mudaram), sem percorrer as
+    /// centenas de pastas de projetos.
+    public func refresh(persist: Bool = true, only: [URL]? = nil) -> [UsageRecord] {
         lock.lock(); defer { lock.unlock() }
         let fm = FileManager.default
         var changed = false
+        let rootPath = root.standardizedFileURL.path + "/"
+        let candidates: AnySequence<Any> = only.map { urls in
+            AnySequence(urls.filter { $0.standardizedFileURL.path.hasPrefix(rootPath) }.map { $0 as Any })
+        } ?? AnySequence(fm.enumerator(at: root, includingPropertiesForKeys: [.fileSizeKey, .contentModificationDateKey])
+                            .map { Array($0) } ?? [])
 
-        if let walker = fm.enumerator(at: root, includingPropertiesForKeys: [.fileSizeKey, .contentModificationDateKey]) {
-            for case let url as URL in walker where url.pathExtension == "jsonl" {
+        do {
+            for case let url as URL in candidates where url.pathExtension == "jsonl" {
                 guard let values = try? url.resourceValues(forKeys: [.fileSizeKey, .contentModificationDateKey]),
                       let sizeInt = values.fileSize else { continue }
                 let size = UInt64(sizeInt)
@@ -108,17 +119,28 @@ public final class UsageStore: @unchecked Sendable {
                 changed = true
             }
         }
-        if changed { save() }
-        return Self.dedupe(files.values.flatMap(\.records))
+        if changed { dirty = true }
+        if persist, dirty { save(); dirty = false }
+        if !changed, let lastResult { return lastResult }
+        let result = Self.dedupe(files.values.flatMap(\.records))
+        lastResult = result
+        return result
     }
 
     /// O mesmo `message.id` aparece em várias linhas (streaming) e em sessões retomadas. Conta uma vez só.
+    /// Ordena só os índices (copiar dezenas de milhares de registros com textos dentro custava caro
+    /// em cada releitura). A ordenação é estável: no empate de horário, vence o primeiro da lista.
     public static func dedupe(_ records: [UsageRecord]) -> [UsageRecord] {
-        var seen = Set<String>()
-        seen.reserveCapacity(records.count)
-        return records
-            .sorted { $0.timestamp < $1.timestamp }
-            .filter { seen.insert($0.id).inserted }
+        let order = records.indices.sorted {
+            records[$0].timestamp != records[$1].timestamp ? records[$0].timestamp < records[$1].timestamp : $0 < $1
+        }
+        var seen = Set<String>(minimumCapacity: records.count)
+        var out: [UsageRecord] = []
+        out.reserveCapacity(records.count)
+        for i in order where seen.insert(records[i].id).inserted {
+            out.append(records[i])
+        }
+        return out
     }
 
     private func save() {

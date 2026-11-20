@@ -243,6 +243,13 @@ public final class FileSource: @unchecked Sendable {
         }
     }
 
+    /// Os registros já lidos, sem tocar no disco (para as releituras rápidas: um arquivo do Codex
+    /// em uso pode ter dezenas de MB e é relido inteiro quando muda).
+    public func cached() -> [UsageRecord] {
+        lock.lock(); defer { lock.unlock() }
+        return entries.values.flatMap(\.records)
+    }
+
     public func refresh() -> [UsageRecord] {
         lock.lock(); defer { lock.unlock() }
         var changed = false

@@ -4,8 +4,8 @@ App de Mac para quem programa com IA, com anéis de meta e sequências: tokens p
 
 ## Onde está cada coisa
 - `Sources/GitBeatCore/`: lógica sem interface. `UsageStore.swift` (Claude Code), `OtherTools.swift` (OpenCode, Codex, Gemini), `HistoryArchive.swift` (histórico permanente), `Stats.swift`, `Pricing.swift`, `GitHub.swift`.
-- `Sources/GitBeat/`: o app. `AppModel.swift` junta os dados; `SystemIntegration.swift` cuida de abrir no login e das notificações; `Preferences.swift` tem idioma, visual e tema (e a função `T`); `Theme.swift` tem os tokens visuais; `Brand.swift` a marca; `Sources/GitBeat/Views/` as telas.
-- `site/`: página de apresentação (um `site/index.html` só, sem dependências; imagens em `site/assets/`). `brand/`: SVGs originais do logo. `Tests/GitBeatChecks/main.swift`: checagens. `scripts/`: build e conferência de docs.
+- `Sources/GitBeat/`: o app. `AppModel.swift` junta os dados (leitura completa a cada 2 min; releitura rápida dos logs do Claude Code que mudaram, via `FolderWatcher.swift`); `SystemIntegration.swift` cuida de abrir no login e das notificações; `Preferences.swift` tem idioma, visual e tema (e a função `T`); `Theme.swift` tem os tokens visuais; `Brand.swift` a marca; `MenuBarMascot.swift` o mascote animado da barra; `Sources/GitBeat/Views/` as telas (`MascotView.swift`: mascote na janela).
+- `site/`: página de apresentação (um `site/index.html` só, sem dependências; imagens em `site/assets/`). `brand/mascot/`: kit do mascote (SVGs, manifestos, guias). `Resources/`: arquivos que vão para dentro do `.app` (ícone, logos, quadros das animações). `archive/`: site e logo antigos guardados. `Tests/GitBeatChecks/main.swift`: checagens. `scripts/`: build e conferência de docs.
 
 ## Comandos
 - Checagens: `swift run GitBeatChecks` · com os dados reais: `swift run -c release GitBeatChecks --real`
@@ -20,6 +20,7 @@ App de Mac para quem programa com IA, com anéis de meta e sequências: tokens p
 - Nenhum dado sai do Mac além das chamadas do `gh` e da cópia no iCloud Drive do próprio usuário.
 - Preços em `Sources/GitBeatCore/Pricing.swift`, conferidos na fonte oficial com data. Nunca de memória.
 - Identificadores de ferramenta (`Tool`) ficam gravados no histórico: não mudar.
+- Custo em real usa a cotação que o usuário informa nos Ajustes; o app não busca cotação na internet (seria rede além do `gh` e do iCloud).
 - Licença ainda não definida e **não será MIT**: não adicionar arquivo de licença nem chamar o projeto de código aberto. Ver `docs/decisoes.md`.
 
 ## Não verificado

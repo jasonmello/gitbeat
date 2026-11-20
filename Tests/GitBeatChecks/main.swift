@@ -303,6 +303,31 @@ enum NotificationTests {
     }
 }
 
+run("medidor de atividade (kit do mascote)") {
+    let start = Date(timeIntervalSince1970: 10_000)
+    func date(_ seconds: Double) -> Date { start.addingTimeInterval(seconds) }
+    var m = ActivityMeter()
+    m.observe(totalTokens: 96_500_000, at: date(0)); expect(m.level(at: date(0)) == .idle)   // total inicial não anima
+    m.observe(totalTokens: 96_510_000, at: date(1)); expect(m.level(at: date(1)) == .flowing)
+    m.observe(totalTokens: 96_620_000, at: date(4)); expect(m.level(at: date(4)) == .busy)
+    m.observe(totalTokens: 97_220_000, at: date(7)); expect(m.level(at: date(7)) == .burst)
+    expect(m.recentTokens(at: date(7)) == 720_000)
+    expect(m.level(at: date(68)) == .idle)                                                   // atividade expira
+    m.observe(totalTokens: 10, at: date(69)); expect(m.level(at: date(69)) == .idle)          // virada do dia
+    m.observe(totalTokens: 20, at: date(70)); expect(m.level(at: date(70)) == .flowing)
+    m.observe(totalTokens: 9_999, at: date(69)); expect(m.totalTokens == 20)                  // fora de ordem
+    m.observe(totalTokens: -2, at: date(71)); expect(m.totalTokens == 20)                     // inválido
+    m.observe(totalTokens: 500_000, at: date(72), countActivity: false); expect(m.level(at: date(72)) == .idle)
+    m.observe(totalTokens: 500_100, at: date(73)); expect(m.recentTokens(at: date(73)) == 100)
+    m.observe(totalTokens: 9_000_000, at: date(200)); expect(m.level(at: date(200)) == .idle) // lacuna longa
+    var edge = ActivityMeter()
+    edge.observe(totalTokens: 0, at: date(0)); edge.observe(totalTokens: 100_000, at: date(1))
+    expect(edge.level(at: date(1)) == .busy)
+    edge.observe(totalTokens: 700_000, at: date(2)); expect(edge.level(at: date(2)) == .busy) // espera mínima
+    expect(edge.level(at: date(3)) == .burst)
+    expect(edge.recentTokens(at: date(62)) == 0)
+}
+
 if CommandLine.arguments.contains("--real") {
     // Lê os arquivos de verdade e imprime os últimos 7 dias, para conferir com uma soma independente.
     let cache = FileManager.default.temporaryDirectory.appendingPathComponent("gitbeat-check-cache.json")

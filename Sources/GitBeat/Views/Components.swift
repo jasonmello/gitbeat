@@ -416,9 +416,12 @@ struct LoadingPage: View {
                       spacing: Theme.gap) {
                 ForEach(0..<4, id: \.self) { _ in skeletonCard(height: 170) }
             }
-            Text(T("Reading your coding history. The first time takes about 20 seconds; after that, under one.",
-                   "Lendo o seu histórico. Na primeira vez leva uns 20 segundos; depois, menos de um."))
-                .font(.callout).foregroundStyle(.secondary)
+            HStack(spacing: 12) {
+                MascotView(mood: .idle, size: 56)
+                Text(T("Reading your coding history. The first time takes about 20 seconds; after that, under one.",
+                       "Lendo o seu histórico. Na primeira vez leva uns 20 segundos; depois, menos de um."))
+                    .font(.callout).foregroundStyle(.secondary)
+            }
         }
     }
 
@@ -439,6 +442,7 @@ struct LoadingPage: View {
 struct EmptyPage: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            MascotView(mood: .curious, size: 96)
             PageHeader(title: T("Nothing to show yet", "Nada para mostrar ainda"), subtitle: T("Coding tools", "Ferramentas"))
             Text(T("No sessions found for Claude Code, OpenCode, Codex or Gemini CLI. Use one of them once and press Refresh (⌘R).",
                    "Não achei sessões do Claude Code, OpenCode, Codex nem Gemini CLI. Use uma delas uma vez e clique em Atualizar (⌘R)."))
