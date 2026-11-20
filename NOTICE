@@ -1,0 +1,69 @@
+GitBeat
+Copyright (C) 2026 Jason Mello <https://github.com/jasonmello>
+
+GitBeat is free software: you can redistribute it and/or modify it under the
+terms of the GNU General Public License version 3 (see the LICENSE file), with
+the additional terms below, permitted by Section 7 of that license.
+
+================================================================================
+English
+================================================================================
+
+Additional term — Attribution (GPL-3.0 Section 7(b))
+----------------------------------------------------
+If you convey the source code, or a work based on it, you must preserve the
+author attribution:
+
+    Based on GitBeat by Jason Mello (https://github.com/jasonmello)
+
+This attribution must stay visible in the application's "About" screen and in
+the README of any distributed version. You may not remove or alter it. This is
+a reasonable attribution notice under GPL-3.0 Section 7(b); it does not add any
+further restriction and keeps the work under the GPL.
+
+Name, logo and mascot are NOT covered by the GPL
+------------------------------------------------
+The name "GitBeat", the GitBeat logo, and the GitBeat mascot — including the
+artwork under brand/ and the logo and mascot image files under Resources/ — are
+NOT licensed under the GNU GPL. They remain:
+
+    Copyright (C) 2026 Jason Mello. All rights reserved.
+
+and are trademarks of their author. The GPL grants you no right to use them. As
+provided by GPL-3.0 Section 7(e), permission to use these names, trademarks and
+artwork is declined for modified versions. A fork or modified version must use a
+different name and must remove or replace the logo and the mascot before it is
+distributed.
+
+================================================================================
+Português
+================================================================================
+
+Termo adicional — Atribuição (GPL-3.0, Seção 7(b))
+--------------------------------------------------
+Se você distribuir o código-fonte, ou um trabalho baseado nele, precisa manter a
+atribuição ao autor:
+
+    Baseado no GitBeat, de Jason Mello (https://github.com/jasonmello)
+
+Essa atribuição tem de continuar visível na tela "Sobre" do aplicativo e no
+README de qualquer versão distribuída. Você não pode removê-la nem alterá-la. É
+um aviso razoável de atribuição permitido pela Seção 7(b) da GPL-3.0; não
+acrescenta nenhuma restrição a mais e mantém o trabalho sob a GPL.
+
+Nome, logo e mascote NÃO entram na GPL
+--------------------------------------
+O nome "GitBeat", o logo do GitBeat e o mascote do GitBeat — incluindo a arte em
+brand/ e os arquivos de imagem do logo e do mascote em Resources/ — NÃO estão sob
+a GNU GPL. Eles continuam:
+
+    Copyright (C) 2026 Jason Mello. Todos os direitos reservados.
+
+e são marcas do autor. A GPL não concede nenhum direito de uso sobre eles. Como
+prevê a Seção 7(e) da GPL-3.0, a permissão de uso desses nomes, marcas e arte é
+negada para versões modificadas. Um fork ou versão modificada precisa usar outro
+nome e precisa remover ou substituir o logo e o mascote antes de distribuir.
+
+================================================================================
+This NOTICE is informational and is not legal advice.
+Este NOTICE é informativo e não é aconselhamento jurídico.

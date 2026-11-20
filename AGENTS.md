@@ -21,7 +21,7 @@ App de Mac para quem programa com IA, com anéis de meta e sequências: tokens p
 - Preços em `Sources/GitBeatCore/Pricing.swift`, conferidos na fonte oficial com data. Nunca de memória.
 - Identificadores de ferramenta (`Tool`) ficam gravados no histórico: não mudar.
 - Custo em real usa a cotação que o usuário informa nos Ajustes; o app não busca cotação na internet (seria rede além do `gh` e do iCloud).
-- Licença ainda não definida e **não será MIT**: não adicionar arquivo de licença nem chamar o projeto de código aberto. Ver `docs/decisoes.md`.
+- Licença **GPL-3.0** com termo de atribuição (Seção 7b) e **nome, logo e mascote reservados** (fora da licença). Fork precisa trocar nome e trocar/remover logo e mascote. Ver `LICENSE`, `NOTICE` e `docs/decisoes.md`. **Não é MIT.**
 
 ## Não verificado
 - Gemini CLI: nenhum chat nesta máquina; leitor testado só com exemplo montado. OpenCode: instalado, mas sem uso (0 tokens); leitor testado com exemplo.

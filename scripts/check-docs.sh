@@ -17,6 +17,8 @@ for doc in AGENTS.md DESIGN.md docs/*.md; do
       else
         [[ -e "$token" ]] || { echo "$doc: caminho não existe: $token"; fail=1; }
       fi
+    elif [[ -e "$token" ]]; then
+      continue   # arquivo na raiz sem extensão (ex.: LICENSE, NOTICE)
     elif [[ "$token" =~ '^[A-Z][A-Za-z]+(\.[a-z][A-Za-z]+)?$' ]]; then
       name="${token##*.}"
       grep -rqw -- "$name" Sources Tests scripts || { echo "$doc: símbolo não existe: $token"; fail=1; }
