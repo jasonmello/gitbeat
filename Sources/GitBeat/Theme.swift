@@ -3,7 +3,7 @@ import GitBeatCore
 
 /// Tokens visuais do app. Ver DESIGN.md. Componentes nunca usam cor, raio, sombra ou duração soltos.
 enum Theme {
-    // MARK: cores dos assuntos (cores de dado, como os anéis do app Saúde)
+    // MARK: cores dos assuntos (cores de dado, uma por assunto, usadas também nos anéis)
     static let tokens = Color.pink
     static let time = Color.teal
     static let github = Brand.green

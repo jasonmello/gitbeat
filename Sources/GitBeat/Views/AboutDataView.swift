@@ -65,8 +65,8 @@ struct AboutDataView: View {
             }
 
             Card(title: T("Requirements", "Requisitos"), systemImage: "laptopcomputer", tint: .secondary) {
-                Paragraph(T("macOS 14 or later; Liquid Glass needs macOS 26. GitHub data needs the GitHub CLI (gh) signed in. You don't need Xcode to use GitBeat — or even to build it: it builds with Apple's free Command Line Tools.",
-                       "macOS 14 ou mais novo; o Liquid Glass precisa do macOS 26. Os dados do GitHub precisam do GitHub CLI (gh) logado. Você não precisa do Xcode para usar o GitBeat, nem para compilar: ele compila com as Command Line Tools, gratuitas, da Apple."))
+                Paragraph(T("macOS 14 or later; Liquid Glass needs macOS 26. GitHub data needs the GitHub CLI (gh) signed in. You don't need Xcode to use GitBeat — or even to build it: it builds with the free Command Line Tools.",
+                       "macOS 14 ou mais novo; o Liquid Glass precisa do macOS 26. Os dados do GitHub precisam do GitHub CLI (gh) logado. Você não precisa do Xcode para usar o GitBeat, nem para compilar: ele compila com as Command Line Tools, que são gratuitas."))
                     .font(.callout)
             }
 
