@@ -5,13 +5,13 @@ App de Mac no estilo do app Saúde do iPhone para quem programa com IA: tokens p
 ## Onde está cada coisa
 - `Sources/GitBeatCore/`: lógica sem interface. `UsageStore.swift` (Claude Code), `OtherTools.swift` (OpenCode, Codex, Gemini), `HistoryArchive.swift` (histórico permanente), `Stats.swift`, `Pricing.swift`, `GitHub.swift`.
 - `Sources/GitBeat/`: o app. `AppModel.swift` junta os dados; `SystemIntegration.swift` cuida de abrir no login e das notificações; `Preferences.swift` tem idioma, visual e tema (e a função `T`); `Theme.swift` tem os tokens visuais; `Brand.swift` a marca; `Sources/GitBeat/Views/` as telas.
-- `brand/`: SVGs originais do logo. `Tests/GitBeatChecks/main.swift`: checagens. `scripts/`: build e conferência de docs.
+- `site/`: página de apresentação (um `site/index.html` só, sem dependências; imagens em `site/assets/`). `brand/`: SVGs originais do logo. `Tests/GitBeatChecks/main.swift`: checagens. `scripts/`: build e conferência de docs.
 
 ## Comandos
 - Checagens: `swift run GitBeatChecks` · com os dados reais: `swift run -c release GitBeatChecks --real`
 - Rodar: `swift run GitBeat` · Montar o app: `scripts/build-app.sh` (`--install` copia para /Applications)
 - Capturas de todas as telas (en/pt, glass/clássico, claro/escuro): `.build/release/GitBeat --snapshot <pasta>`
-- Docs: `scripts/check-docs.sh`
+- Docs: `scripts/check-docs.sh` · Site local: configuração `site` em `.claude/launch.json` (porta 8787)
 
 ## Regras que não se quebram
 - Compila só com as Command Line Tools: nada de `@State` (use `@ViewState`) nem macros do Swift Testing. Motivo em `docs/decisoes.md`.
@@ -20,6 +20,7 @@ App de Mac no estilo do app Saúde do iPhone para quem programa com IA: tokens p
 - Nenhum dado sai do Mac além das chamadas do `gh` e da cópia no iCloud Drive do próprio usuário.
 - Preços em `Sources/GitBeatCore/Pricing.swift`, conferidos na fonte oficial com data. Nunca de memória.
 - Identificadores de ferramenta (`Tool`) ficam gravados no histórico: não mudar.
+- Licença ainda não definida e **não será MIT**: não adicionar arquivo de licença nem chamar o projeto de código aberto. Ver `docs/decisoes.md`.
 
 ## Não verificado
 - Gemini CLI: nenhum chat nesta máquina; leitor testado só com exemplo montado. OpenCode: instalado, mas sem uso (0 tokens); leitor testado com exemplo.

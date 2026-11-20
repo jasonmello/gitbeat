@@ -47,6 +47,12 @@ Neutros quentes, nunca preto/branco puros: página `Theme.page` (#f5f5f3 / #0e0e
 ## Estados
 Carregando: `LoadingPage` com skeleton e brilho. Vazio: `EmptyPage`/`EmptyNote`. Erro do GitHub: cartão laranja com o texto selecionável e "mostrando os últimos dados salvos".
 
+## Site (`site/index.html`)
+- Mesma marca e cores dos assuntos; tokens no `:root` do arquivo. Escuro é o padrão; claro e escuro seguem o sistema, com botão para trocar. Inglês original, botão PT.
+- No tema claro, texto em verde usa `--accent-text` (#00825f), porque o verde da marca não tem contraste em fundo claro; botões e gráficos mantêm o #00C995.
+- Imagens só de telas sem dados privados (Resumo, Tempo, Metas). Nada de nomes de repositório, títulos de PR ou projetos.
+- Movimento: linha de batimento desenhada no topo, anéis fechando e barras subindo ao entrar na tela; tudo desliga com "reduzir movimento".
+
 ## Voz e conteúdo
 - Inglês original, português como opção, sempre lado a lado em `T("…", "…")`.
 - Frases curtas, fatos concretos, sem jargão quando dá. Erro diz o que fazer.
