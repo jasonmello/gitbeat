@@ -35,6 +35,9 @@ struct MenuBarView: View {
                 Image(systemName: "flame.fill").foregroundStyle(Theme.streak)
                 Text("\(model.currentStreak) \(Fmt.days(model.currentStreak)) " + T("in a row", "seguidos"))
                     .font(.callout).monospacedDigit()
+                if model.streakAtRisk {
+                    Text(T("ends today", "termina hoje")).eyebrow().foregroundStyle(Theme.streak)
+                }
             }
             Divider()
             HStack {

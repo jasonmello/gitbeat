@@ -4,7 +4,7 @@ App de Mac no estilo do app Saúde do iPhone para quem programa com IA: tokens p
 
 ## Onde está cada coisa
 - `Sources/GitBeatCore/`: lógica sem interface. `UsageStore.swift` (Claude Code), `OtherTools.swift` (OpenCode, Codex, Gemini), `HistoryArchive.swift` (histórico permanente), `Stats.swift`, `Pricing.swift`, `GitHub.swift`.
-- `Sources/GitBeat/`: o app. `AppModel.swift` junta os dados; `Preferences.swift` tem idioma, visual e tema (e a função `T`); `Theme.swift` tem os tokens visuais; `Brand.swift` a marca; `Sources/GitBeat/Views/` as telas.
+- `Sources/GitBeat/`: o app. `AppModel.swift` junta os dados; `SystemIntegration.swift` cuida de abrir no login e das notificações; `Preferences.swift` tem idioma, visual e tema (e a função `T`); `Theme.swift` tem os tokens visuais; `Brand.swift` a marca; `Sources/GitBeat/Views/` as telas.
 - `brand/`: SVGs originais do logo. `Tests/GitBeatChecks/main.swift`: checagens. `scripts/`: build e conferência de docs.
 
 ## Comandos
@@ -23,7 +23,8 @@ App de Mac no estilo do app Saúde do iPhone para quem programa com IA: tokens p
 
 ## Não verificado
 - Gemini CLI: nenhum chat nesta máquina; leitor testado só com exemplo montado. OpenCode: instalado, mas sem uso (0 tokens); leitor testado com exemplo.
-- Build no Xcode completo e no CI (macOS runner) ainda não rodou. Sincronização entre dois Macs pelo iCloud não foi testada com um segundo Mac.
+- Build no Xcode completo não rodou (o CI no macOS compila e passa nas checagens). Sincronização entre dois Macs pelo iCloud não foi testada com um segundo Mac.
+- Abrir no login: funcionando (conferido com `--integration-status`). Notificações: o macOS recusa ("not allowed") para o app assinado só localmente; provável causa é a falta de Developer ID, não confirmada. Ver `docs/decisoes.md`.
 
 ## Antes de X, leia Y
 | Antes de… | Leia |

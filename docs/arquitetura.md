@@ -35,6 +35,13 @@ Formatos lidos do código-fonte de cada uma em 2026-11-19 e conferidos com os ar
 ## GitHub (`Sources/GitBeatCore/GitHub.swift`)
 - Pelo `gh` (procurado em `~/.local/bin`, `/opt/homebrew/bin`, `/usr/local/bin`). Commits pelo histórico do branch principal de cada repositório (inclui privados), até 100 por repositório no ano. PRs pela busca, até 1.000. Cache `github-v2.json`, relido após 30 min ou no Refresh.
 
+## Abrir no login e notificações (`Sources/GitBeat/SystemIntegration.swift`, `Sources/GitBeatCore/NotificationPlanner.swift`)
+- Só funcionam como `.app` (com bundle identifier); por `swift run` ficam desligados.
+- Abrir no login: `SMAppService.mainApp`, ligado sozinho na primeira abertura como app; a chave nos Ajustes reflete o estado real do sistema. Registra o caminho do app em uso, por isso o app deve rodar de /Applications (`scripts/build-app.sh --install`).
+- Notificações: `NotificationPlanner` decide (função pura, com checagens); `Notifier` executa depois de cada atualização. Anéis fechados: uma vez por dia. Sequência em risco: lembrete agendado no horário escolhido (padrão 21h) se hoje ainda não teve atividade; é cancelado e reagendado a cada atualização, então some assim que aparece atividade.
+- `GitBeat --integration-status` pede a permissão e imprime o resultado, o estado do item de login e o da permissão de notificações.
+- Sem permissão de notificação, o lembrete aparece no ícone da barra de menu: vira uma chama depois do horário do lembrete quando hoje está sem atividade e há sequência (`AppModel.streakAtRisk`).
+
 ## App (`Sources/GitBeat/`)
 - `AppModel` relê tudo ao abrir e a cada 10 min, em `Task.detached`. Migra a pasta antiga `SaudeDev` na primeira abertura.
 - `Preferences`: idioma (padrão inglês), visual (padrão Liquid Glass) e tema, em UserDefaults; `T()` lê o idioma e as telas redesenham ao trocar.
