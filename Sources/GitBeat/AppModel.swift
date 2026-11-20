@@ -52,6 +52,7 @@ final class AppModel {
     private let githubClient = GitHubClient()
     private let githubCacheURL: URL
     private var timer: Timer?
+    private let notifies: Bool
     private static let goalsKey = "goals"
     private static let githubMaxAge: TimeInterval = 30 * 60
 
@@ -91,6 +92,7 @@ final class AppModel {
             github = try? JSONDecoder().decode(GitHubSnapshot.self, from: data)
         }
 
+        notifies = autoRefresh
         guard autoRefresh else { return }
         Task { await refresh() }
         timer = Timer.scheduledTimer(withTimeInterval: 10 * 60, repeats: true) { [weak self] _ in
@@ -178,6 +180,7 @@ final class AppModel {
         let stale = github.map { Date().timeIntervalSince($0.fetchedAt) > Self.githubMaxAge } ?? true
         if forceGitHub || stale { await refreshGitHub() }
         lastUpdated = Date()
+        if notifies { Notifier.shared.update(with: self) }
     }
 
     private func refreshGitHub() async {
@@ -258,6 +261,14 @@ final class AppModel {
     }
 
     var currentStreak: Int { Streaks.current(activeDays: activeDays, today: Date(), days: days) }
+
+    /// Depois do horário do lembrete, hoje sem atividade e com uma sequência para perder.
+    /// Mostrado no ícone da barra de menu, que funciona mesmo sem permissão de notificação.
+    var streakAtRisk: Bool {
+        let prefs = Preferences.shared
+        guard prefs.notifyStreak, currentStreak >= 1, !activeDays.contains(todayKey) else { return false }
+        return days.calendar.component(.hour, from: Date()) >= prefs.reminderHour
+    }
     var longestStreak: Int { Streaks.longest(activeDays: activeDays, days: days) }
 
     // MARK: séries para os gráficos

@@ -28,9 +28,10 @@ struct GitBeatApp: App {
                 .preferredColorScheme(prefs.mode.colorScheme)
         } label: {
             HStack(spacing: 4) {
-                Image(systemName: "waveform.path.ecg")
+                Image(systemName: model.streakAtRisk ? "flame.fill" : "waveform.path.ecg")
                 Text(Fmt.tokens(model.tokens(on: model.todayKey).total))
             }
+            .help(model.streakAtRisk ? T("Your streak ends today", "Sua sequência termina hoje") : Brand.name)
         }
         .menuBarExtraStyle(.window)
 
@@ -53,6 +54,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Task { @MainActor in await Snapshot.run(to: URL(fileURLWithPath: args[i + 1])) }
             return
         }
+        if args.contains("--integration-status") { // para conferir pelo terminal
+            Task { @MainActor in
+                print("request: \(await Notifier.shared.requestPermissionResult())")
+                let auth = await Notifier.shared.authorizationStatus()
+                print("login item: \(LoginItem.status)")
+                print("notifications: \(auth.map { String(describing: $0.rawValue) } ?? "unavailable") (0 não decidido, 1 negado, 2 permitido, 3 provisório)")
+                exit(0)
+            }
+            return
+        }
+        LoginItem.enableOnFirstLaunch()
+        Task { @MainActor in Notifier.shared.start() }
         // Rodando por `swift run` não há Info.plist; isto garante ícone no Dock e janela na frente.
         NSApp.setActivationPolicy(.regular)
         NSApp.activate()

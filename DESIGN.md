@@ -50,4 +50,5 @@ Carregando: `LoadingPage` com skeleton e brilho. Vazio: `EmptyPage`/`EmptyNote`.
 ## Voz e conteúdo
 - Inglês original, português como opção, sempre lado a lado em `T("…", "…")`.
 - Frases curtas, fatos concretos, sem jargão quando dá. Erro diz o que fazer.
+- Notificações: título curto e uma frase com o número que importa ("Your 5-day streak ends today"). No máximo uma de anéis por dia e um lembrete de sequência.
 - Números: en `598M`, `1.2B`, `35K`, `4h 06m`, `$277.45`; pt `598 mi`, `1,2 bi`, `35 mil`, `4h 06min`, `US$ 277,45` (`Fmt`).
